@@ -3,60 +3,116 @@
 --- Created by SZS.
 --- DateTime: 23.04.2022 21:32
 ---
-
 local Class = require('lib/Class')
 local RobotApi = require("robot")
 local Computer = require('computer')
 local Position = require('lib/Position')
 
 RobotApi.class = "Class Native.RobotApi"
-Computer.class = "Class Native.Component.Computer"
-local Robot = Class:extended(Computer):extended(RobotApi):extended({ class = "Class Robot" })
+Computer.class = "Class Native.Computer"
 
-function Robot:new(initTable)
+---@class Robot : Class_Computer_RobotAPI @extended native OC API robot, computer
+local Robot = Class:extended(Computer):extended(RobotApi):extended({
+    class = "Class Robot"
+})
+
+---@type fun(init:table):Robot
+function Robot:new(init)
     local instance = self.super:new()
-    return self:extendedInstance(instance):init(initTable)
+    return self:extendedInstance(instance):init(init)
 end
 
 -- startPosition {0,0,0,0} x,y,z,r / r : Position.side
-function Robot:init(initTable)
-    Robot.position = Position:new(table.unpack(initTable.startPosition))
-    Robot.buildWorker = initTable.buildWorker
-    Robot.baseStation = initTable.baseStation
-    Robot.inventoryManager = initTable.toolManager
+---@type fun(init:table):Robot
+function Robot:init(init)
+    Robot.position = Position:new(table.unpack(init.startPosition))
+    Robot.buildWorker = init.buildWorker
+    Robot.baseStation = init.baseStation
+    Robot.inventoryManager = init.toolManager
+    return self
 end
 
--- local result, error = robot_api.forward()
---     if not result then
---         for i = 1, 100 do
---             robot_api.swing()
---             result, error = robot_api.forward()
---             if result then
---                 self.gps:forward()
---                 break
---             end
---         end
---     else
---         self.gps:forward()
---     end
---     if not result then
---         os.exit('no forward')
---     end
---     return result, error
+---@type fun(removeObstacle:boolean, tries:number): boolean, string
+function Robot:forward( removeObstacle, tries)
+    self:baseMove(self.super.forward(), ":forward()", self.swing, self.position.stepForward, removeObstacle, tries)
+end
 
--- tries false or nil = loop
-function Robot:forward(removeObstacle, tries)
-    local result, error = self.super:forward()
-    if not result and removeObstacle then
+-- todo self.moveImpossibleHendler is plug
+function Robot:back( removeObstacle, tries)
+    self:baseMove(self.super.back(), ":back()", self.moveImpossibleHendler, self.position.stepBack, removeObstacle, tries)
+end
+
+function Robot:up( removeObstacle, tries)
+    self:baseMove(self.super.up(), ":up()", self.swingUp, self.position.stepUp, removeObstacle, tries)
+end
+
+function Robot:down( removeObstacle, tries)
+    self:baseMove(self.super.down(), ":down()", self.swingDown, self.position.stepDown, removeObstacle, tries)
+end
+
+function Robot:baseMove(nativeMoveFunc, moveFuncName, swingFunc, movePositionFunc, removeObstacle, tries)
+    local status, error = nativeMoveFunc()
+    if status then
+        -- self.position:stepForward()
+        movePositionFunc(self.position)
+        return status, error
+    end
+    if removeObstacle then
         while not tries or tries > 0 do
-            self:swing()
+            -- self:swing()
+            swingFunc(self)
+            status, error = nativeMoveFunc()
+            if status then
+                -- self.position:stepForward()
+                movePositionFunc(self.position)
+                return status, error
+            end
+            if tries then
+                tries = tries - 1
+            end
         end
     end
-    return result, error   
+    return self:moveImpossibleHendler(moveFuncName, status, error)
 end
 
 function Robot:swing()
-    
+    return self:baseSwing(self.super.swing, ":swing()")
+end
+
+function Robot:swingUp()
+    return self:baseSwing(self.super.swingUp, ":swingUp()")
+end
+
+function Robot:swingDown()
+    return self:baseSwing(self.super.swingDown, ":swingDown()")
+end
+
+function Robot:baseSwing(nativeSwingFunc, funcName)
+    self.inventoryManager:toolMaintenance()
+    local status, message = nativeSwingFunc()
+    if not status then
+        if message ~= 'entity' then
+            while self.inventoryManager:nextToolToRemoveBlock() or not status do
+                status, message = nativeSwingFunc()
+            end
+            self.inventoryManager:selectDefaultTool()
+            if not status then
+                return self:swingImpossibleHendler(funcName, status, error)
+            end
+        end
+    end
+end
+
+---@param funcName string @ up, down, forward, back
+---@param status boolean
+---@param error string @ impossible move, not enough energy or robot.detect would return. https://ocdoc.cil.li/api:robot
+---@type fun(funcName:string, status:boolean, error:string): boolean, string
+function Robot:moveImpossibleHendler(funcName, status, error)
+    self:error(tostring(funcName) .. " move is impossible")
+end
+
+function Robot:swingImpossibleHendler(funcName, status, message)
+    self:error(":" .. funcName .. " " .. message .. " is impossible")
 end
 
 return Robot

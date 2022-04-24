@@ -53,7 +53,7 @@ function Position:sub(pos)
 end
 
 function Position:get(format)
-    if not format then
+    if format == nil then
         return self.x, self.y, self.z, self.r
     end
     if self:assertFormat(format) then

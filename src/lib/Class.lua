@@ -23,7 +23,7 @@ end
 function Class:extended (child) -- child = {}
     -- наследование статичестой части таблица Class, child.super доступ к статической таблице родителя
     child.super = self
-    setmetatable(child, { __index = self, --[[__call = self.call]]})
+    setmetatable(child, { __index = self, isInstance = false})
     return child
 end
 
@@ -36,7 +36,7 @@ function Class:extendedInstance(instance)
 end
 
 function Class:new()
-    local instance = {}
+    local instance = {isInstance = true}
     return self:extendedInstance(instance)
 end
 
@@ -72,6 +72,13 @@ function Class:assertNumber(number, message)
     return self:assertNumberSetDefault(number, nil, message)
 end
 
+function Class:error(message)
+    error(self:tostring()..message)
+end
+
+function Class:nop()
+    
+end
 --setmetatable(Class, {__call = Class.call})
 
 return Class
