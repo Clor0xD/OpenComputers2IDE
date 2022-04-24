@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="LUA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <content url="file://$USER_HOME$/Desktop/MultiMC/instances/IIA161OC/minecraft/saves/TestNewOC/opencomputers" />
+    <content url="file://$USER_HOME$/Desktop/MultiMC/instances/IIA_1.18.0/.minecraft/saves/OC_TEST/opencomputers" />
+    <content url="file://$USER_HOME$/Desktop/MultiMC/instances/IIB/minecraft/saves/New World/opencomputers/da6acd43-7771-4d12-945c-8433000900e8" />
+    <content url="file://$USER_HOME$/Desktop/MultiMC/instances/IIB/minecraft/saves/New World/opencomputers/e2bd38b0-9541-4f08-860d-e540db019b38" />
+    <content url="file://$USER_HOME$/Desktop/MultiMC/instances/IIB/minecraft/saves/OCTestWorld/opencomputers/cf437c97-9347-4b05-9ab3-17d54009d828" />
+    <content url="file://$MODULE_DIR$/../Users/opencomputers.USER-PK/UM/worlds/world/opencomputers" />
+    <content url="file://$MODULE_DIR$/../Users/opencomputers.USER-PK/UM17/worlds/world/opencomputers" />
+    <content url="file://$MODULE_DIR$/../Users/opencomputers.USER-PK/UM18/worlds/world/opencomputers" />
+    <content url="file://E:/MinecraftServer/Termos 1.7.10 1614/world/opencomputers" />
+    <orderEntry type="jdk" jdkName="Lua" jdkType="Lua SDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

@@ -1,0 +1,14 @@
+me_interface    c54daebd-b476-4661-ab1d-3bbbbbb03a4c
+  getAvgPowerInjection            function():number -- Get the average power injection into the network.
+  getAvgPowerUsage                function():number -- Get the average power usage of the network.
+  getCpus                         function():table -- Get a list of tables representing the available CPUs in the network.
+  getCraftables                   function([filter:table]):table -- Get a list of known item recipes. These can be used to issue crafting requests.
+  getFluidsInNetwork              function():table -- Get a list of the stored fluids in the network.
+  getGasesInNetwork               function():table -- Get a list of the stored gases in the network.
+  getIdlePowerUsage               function():number -- Get the idle power usage of the network.
+  getInterfaceConfiguration       function([slot:number]):table -- Get the configuration of the interface.
+  getItemsInNetwork               function([filter:table]):table -- Get a list of the stored items in the network.
+  getMaxStoredPower               function():number -- Get the maximum stored power in the network.
+  getStoredPower                  function():number -- Get the stored power in the network. 
+  setInterfaceConfiguration       function([slot:number][, database:address, entry:number[, size:number]]):boolean -- Configure the interface.
+  store                           function(filter:table, dbAddress:string[, startSlot:number[, count:number]]): Boolean -- Store items in the network matching the specified filter in the database with the specified address.
