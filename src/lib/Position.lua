@@ -18,26 +18,6 @@ function Position:new(x, y, z, r)
     return self:extendedInstance(instance):set(x, y, z, r)
 end
 
-function Position:assertFormat(format, message)
-    if not format or type(format) ~= 'string' then
-        format = type(format)
-        --if not massage then
-        message = ' incorrect argument format type : ' .. format .. ' [xyzr] string only'
-        --end
-        error(self:tostring() .. message)
-    end
-    if #format == 0 then
-        --if not massage then
-        message = 'incorrect argument format : empty_string'
-        --end
-        error(self:tostring() .. message)
-    end
-    if not massage then
-        message = ' incorrect argument format : ' .. format .. ' [xyzr] only'
-    end
-    return assert(not format:match '[^xyzr]', self:tostring() .. message)
-end
-
 function Position:add(pos)
     self.x = self.x + pos.x
     self.y = self.y + pos.y
@@ -90,32 +70,21 @@ function Position:copy(position) -- returnPos:copy(currentPos)
     return self:set(position:get())
 end
 
-function Position:getNeighbourUp()
+function Position:getCoordinatesUp()
     local x, y, z, r = self:get()
     return x, y + 1, z, r
 end
 
-function Position:getNeighbourDown()
+function Position:getCoordinatesDown()
     local x, y, z, r = self:get()
     return x, y - 1, z, r
 end
 
-function Position:getNextLocalRotation(turn)
-    local x, y, z, r = self:get()
-    turn = (turn + self.r) % 4
-    if turn == self.side.negZ then
-        z = z - 1
-    elseif turn == self.side.posZ then
-        z = z + 1
-    elseif turn == self.side.negX then
-        x = x - 1
-    elseif turn == self.side.posX then
-        x = x + 1
-    end
-    return x, y, z, r
+function Position:getCoordinatesLocalRotation(turn)
+    self:getCoordinatesGlobalRotation((turn + self.r) % 4 )
 end
 
-function Position:getNextGlobalRotation(side)
+function Position:getCoordinatesGlobalRotation(side)
     local x, y, z, r = self:get()
     if side == self.side.negZ then
         z = z - 1
@@ -150,27 +119,44 @@ function Position:stepDown()
 end
 
 function Position:stepForward()
-    if self.r == self.side.negZ then
-        self.z = self.z - 1
-    elseif self.r == self.side.posZ then
-        self.z = self.z + 1
-    elseif self.r == self.side.negX then
-        self.x = self.x - 1
-    elseif self.r == self.side.posX then
-        self.x = self.x + 1
-    end
-    return self
+   return self:stepBase(1)
 end
 
 function Position:stepBack()
+    return self:stepBase(-1)
+end
+
+---@private
+function Position:assertFormat(format, message)
+    if not format or type(format) ~= 'string' then
+        format = type(format)
+        --if not massage then
+        message = ' incorrect argument format type : ' .. format .. ' [xyzr] string only'
+        --end
+        error(self:tostring() .. message)
+    end
+    if #format == 0 then
+        --if not massage then
+        message = 'incorrect argument format : empty_string'
+        --end
+        error(self:tostring() .. message)
+    end
+    if not massage then
+        message = ' incorrect argument format : ' .. format .. ' [xyzr] only'
+    end
+    return assert(not format:match '[^xyzr]', self:tostring() .. message)
+end
+
+---@private
+function Position:stepBase(dir)
     if self.r == self.side.negZ then
-        self.z = self.z + 1
+        self.z = self.z - dir
     elseif self.r == self.side.posZ then
-        self.z = self.z - 1
+        self.z = self.z + dir
     elseif self.r == self.side.negX then
-        self.x = self.x + 1
+        self.x = self.x - dir
     elseif self.r == self.side.posX then
-        self.x = self.x - 1
+        self.x = self.x + dir
     end
     return self
 end

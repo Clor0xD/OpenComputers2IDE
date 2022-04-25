@@ -13,8 +13,12 @@ function Object:toolMaintenance()
 end
 
 --iterator
-function Object:nextToolToRemoveBlock()
+---@type fun():function
+function Object:nextToolToRemoveBlockIterator()
     self:noImplError()
+    return function()
+        self:noImplError()
+    end   
 end
 
 function Object:selectDefaultTool()

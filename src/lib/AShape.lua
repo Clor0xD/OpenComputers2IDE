@@ -5,7 +5,7 @@
 ---
 
 local Class = require('lib/Class')
-local AShape = Class:extended({ class = "AbstractClass Shape" })
+local AShape = Class:extended({ class = "AbstractClass AShape" })
 
 AShape.voxelType = {
     internal = 'I',

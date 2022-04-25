@@ -15,9 +15,14 @@ function Object:init(initTable)
     self.usage = initTable.usage
     self.patternFirstSlot = initTable.patternFirstSlot
     self.patternLastSlot = initTable.patternLastSlot    
+    self.position = initTable.position        
 end
 
-function Object:getItem(stack, count)
+function Object:getItemByStack(stack, count)
+    self:noImplError()
+end
+
+function Object:getItemInSlot(slot, count)
     self:noImplError()
 end
 

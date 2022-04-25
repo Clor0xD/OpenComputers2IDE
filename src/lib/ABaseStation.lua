@@ -1,15 +1,15 @@
-local Class = require("lib/Class")
-local ABaseStation = IRunable:extended({class = "AbstractClass BuildWorker"})
-local Robot = require("lib/Robot")
+local Parent = require('lib/Class')
+local Object = Parent:extended({class = 'AbstractClass ABaseStation'})
 
-
-function ABuildWorker:new(initTable)
+function Object:new()
     local instance = self.super:new()
     return self:extendedInstance(instance):init(initTable)
 end
 
-function ABuildWorker:init(initTable)
+function Object:init(initTable)
     self.shape = initTable.shape
     self.sliceBuilder =  initTable.sliceBuilder
     return self
 end   
+
+return Object  

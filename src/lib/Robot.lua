@@ -4,15 +4,15 @@
 --- DateTime: 23.04.2022 21:32
 ---
 local Class = require('lib/Class')
-local RobotApi = require("robot")
-local Computer = require('computer')
+local NativeRobotApi = require("robot")
+local NativeComputer = require('computer')
 local Position = require('lib/Position')
 
-RobotApi.class = "Class Native.RobotApi"
-Computer.class = "Class Native.Computer"
+NativeRobotApi.class = "Class NativeRobotApi"
+NativeComputer.class = "Class NativeComputer"
 
 ---@class Robot : Class_Computer_RobotAPI @extended native OC API robot, computer
-local Robot = Class:extended(Computer):extended(RobotApi):extended({
+local Robot = Class:extended(NativeComputer):extended(NativeRobotApi):extended({
     class = "Class Robot"
 })
 
@@ -25,10 +25,8 @@ end
 -- startPosition {0,0,0,0} x,y,z,r / r : Position.side
 ---@type fun(init:table):Robot
 function Robot:init(init)
-    Robot.position = Position:new(table.unpack(init.startPosition))
-    Robot.buildWorker = init.buildWorker
-    Robot.baseStation = init.baseStation
-    Robot.inventoryManager = init.toolManager
+    self.position = Position:new(table.unpack(init.startPosition))    
+    self.inventoryManager = init.inventoryManager
     return self
 end
 
@@ -50,6 +48,31 @@ function Robot:down( removeObstacle, tries)
     self:baseMove(self.super.down(), ":down()", self.swingDown, self.position.stepDown, removeObstacle, tries)
 end
 
+function Robot:swing()
+    return self:baseSwing(self.super.swing, ":swing()")
+end
+
+function Robot:swingUp()
+    return self:baseSwing(self.super.swingUp, ":swingUp()")
+end
+
+function Robot:swingDown()
+    return self:baseSwing(self.super.swingDown, ":swingDown()")
+end
+
+---@param funcName string @ up, down, forward, back
+---@param status boolean
+---@param error string @ impossible move, not enough energy or robot.detect would return. https://ocdoc.cil.li/api:robot
+---@type fun(funcName:string, status:boolean, error:string): boolean, string
+function Robot:moveImpossibleHendler(funcName, status, error)
+    self:error(tostring(funcName) .. " move is impossible")
+end
+
+function Robot:swingImpossibleHendler(funcName, status, message)
+    self:error(":" .. funcName .. " " .. message .. " is impossible")
+end
+
+---@private
 function Robot:baseMove(nativeMoveFunc, moveFuncName, swingFunc, movePositionFunc, removeObstacle, tries)
     local status, error = nativeMoveFunc()
     if status then
@@ -75,25 +98,17 @@ function Robot:baseMove(nativeMoveFunc, moveFuncName, swingFunc, movePositionFun
     return self:moveImpossibleHendler(moveFuncName, status, error)
 end
 
-function Robot:swing()
-    return self:baseSwing(self.super.swing, ":swing()")
-end
-
-function Robot:swingUp()
-    return self:baseSwing(self.super.swingUp, ":swingUp()")
-end
-
-function Robot:swingDown()
-    return self:baseSwing(self.super.swingDown, ":swingDown()")
-end
-
+---@private
 function Robot:baseSwing(nativeSwingFunc, funcName)
     self.inventoryManager:toolMaintenance()
     local status, message = nativeSwingFunc()
     if not status then
-        if message ~= 'entity' then
-            while self.inventoryManager:nextToolToRemoveBlock() or not status do
+        if message ~= 'entity' then           
+            for tool in self.inventoryManager:nextToolToRemoveBlock() do
                 status, message = nativeSwingFunc()
+                if status then
+                    break
+                end
             end
             self.inventoryManager:selectDefaultTool()
             if not status then
@@ -101,18 +116,6 @@ function Robot:baseSwing(nativeSwingFunc, funcName)
             end
         end
     end
-end
-
----@param funcName string @ up, down, forward, back
----@param status boolean
----@param error string @ impossible move, not enough energy or robot.detect would return. https://ocdoc.cil.li/api:robot
----@type fun(funcName:string, status:boolean, error:string): boolean, string
-function Robot:moveImpossibleHendler(funcName, status, error)
-    self:error(tostring(funcName) .. " move is impossible")
-end
-
-function Robot:swingImpossibleHendler(funcName, status, message)
-    self:error(":" .. funcName .. " " .. message .. " is impossible")
 end
 
 return Robot
