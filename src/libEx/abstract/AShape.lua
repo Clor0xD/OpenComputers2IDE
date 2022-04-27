@@ -4,7 +4,7 @@
 --- DateTime: 21.04.2022 9:11
 ---
 
-local Class = require('lib/Class')
+local Class = require('libEx/Class')
 local AShape = Class:extended({ class = "AbstractClass AShape" })
 
 AShape.voxelType = {

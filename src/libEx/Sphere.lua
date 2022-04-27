@@ -4,7 +4,7 @@
 --- DateTime: 21.04.2022 9:30
 ---
 
-local Shape = require('lib/AShape')
+local Shape = require('libEx/abstract/AShape')
 local Sphere = Shape:extended({ class = "Class Sphere" })
 
 function Sphere:new(initTable)

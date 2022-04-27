@@ -1,4 +1,4 @@
-local IRunable = require("lib/IRunable")
+local IRunable = require("libEx/IRunable")
 local ABuildWorker = IRunable:extended({class = "AbstractClass ABuildWorker"})
 
 

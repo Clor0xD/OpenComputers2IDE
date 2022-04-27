@@ -1,4 +1,4 @@
-local Class = require("lib/Class")
+local Class = require("libEx/Class")
 local IRunable = Class:extended({class = "Interface IRunable"})
 
 function IRunable:new()

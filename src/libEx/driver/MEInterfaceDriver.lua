@@ -1,4 +1,4 @@
-local Parent = require('lib/Class')
+local Parent = require('libEx/Class')
 local Object = Parent:extended({class = 'Class MEInterfaceDriver'})
 
 function Object:new(ID)

@@ -72,12 +72,31 @@ function Class:assertNumber(number, message)
     return self:assertNumberSetDefault(number, nil, message)
 end
 
+function Class:assertEnum(param, enum, message)
+   for _,element in pairs(enum) do
+        if param == element then
+            return param
+        end
+   end
+   self:error(message.." param: "..tostring(param).." not listed")
+end
+
 function Class:error(message)
     error(self:tostring()..message)
 end
 
 function Class:nop()
     
+end
+
+function Class:getClassName()
+    local _, name = string.gmatch(self.class, "([%a%d].+)%s(.+)")()
+    return name
+end
+
+function Class:getClassLevel()
+    local type = string.gmatch(self.class, "([%a%d].+)%s(.+)")()
+    return type
 end
 --setmetatable(Class, {__call = Class.call})
 

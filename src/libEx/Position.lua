@@ -3,12 +3,28 @@
 --- Created by User.
 --- DateTime: 20.04.2022 20:14
 ---
+local Class = require('libEx/Class')
+local Position = Class:extended({
+    class = "Class Position"
+})
 
-local Class = require('lib/Class')
-local Position = Class:extended({ class = "Class Position" })
-
-Position.side = { north = 0, east = 1, south = 2, west = 3, negZ = 0, posX = 1, posZ = 2, negX = 3 }
-Position.turn = { left = -1, forward = 0, right = 1, around = 2, back = 2 }
+Position.side = {
+    north = 0,
+    east = 1,
+    south = 2,
+    west = 3,
+    negZ = 0,
+    posX = 1,
+    posZ = 2,
+    negX = 3
+}
+Position.turn = {
+    left = -1,
+    forward = 0,
+    right = 1,
+    around = 2,
+    back = 2
+}
 
 function Position:new(x, y, z, r)
     local instance = self.super:new()
@@ -18,18 +34,27 @@ function Position:new(x, y, z, r)
     return self:extendedInstance(instance):set(x, y, z, r)
 end
 
-function Position:add(pos)
-    self.x = self.x + pos.x
-    self.y = self.y + pos.y
-    self.z = self.z + pos.z
+function Position:add(position)
+    self.x = self.x + position.x
+    self.y = self.y + position.y
+    self.z = self.z + position.z
     return self
 end
 
-function Position:sub(pos)
-    self.x = self.x - pos.x
-    self.y = self.y - pos.y
-    self.z = self.z - pos.z
+function Position:sub(position)
+    self.x = self.x - position.x
+    self.y = self.y - position.y
+    self.z = self.z - position.z
     return self
+end
+
+function Position:coordsEquels(position)
+    return self.x == position.x and self.y == position.y and self.z == position.z
+end
+
+function Position:equels(position)
+    return self == position or
+               (self.x == position.x and self.y == position.y and self.z == position.z and self.r == position.r)
 end
 
 function Position:get(format)
@@ -59,7 +84,7 @@ end
 function Position:set(x, y, z, r)
     -- self.x, self.y, self.z, self.r = x, y, z, r
     -- return self
-    return self:setf("xyzr", x, y, z, r) --assert params
+    return self:setf("xyzr", x, y, z, r) -- assert params
 end
 
 function Position:clone() -- local returnPos; returnPos = currentPos:clone()
@@ -81,7 +106,7 @@ function Position:getCoordinatesDown()
 end
 
 function Position:getCoordinatesLocalRotation(turn)
-    self:getCoordinatesGlobalRotation((turn + self.r) % 4 )
+    self:getCoordinatesGlobalRotation((turn + self.r) % 4)
 end
 
 function Position:getCoordinatesGlobalRotation(side)
@@ -119,7 +144,7 @@ function Position:stepDown()
 end
 
 function Position:stepForward()
-   return self:stepBase(1)
+    return self:stepBase(1)
 end
 
 function Position:stepBack()
@@ -130,15 +155,15 @@ end
 function Position:assertFormat(format, message)
     if not format or type(format) ~= 'string' then
         format = type(format)
-        --if not massage then
+        -- if not massage then
         message = ' incorrect argument format type : ' .. format .. ' [xyzr] string only'
-        --end
+        -- end
         error(self:tostring() .. message)
     end
     if #format == 0 then
-        --if not massage then
+        -- if not massage then
         message = 'incorrect argument format : empty_string'
-        --end
+        -- end
         error(self:tostring() .. message)
     end
     if not massage then
