@@ -4,6 +4,7 @@
 --- DateTime: 16.04.2022 12:47
 ---
 
+---@class NativeRobotApi : NativeComputerApi 
 local robot = {}
 
 function robot.detectUp()

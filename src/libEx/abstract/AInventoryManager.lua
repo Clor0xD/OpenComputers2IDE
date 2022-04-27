@@ -1,4 +1,6 @@
 local Class = require('libEx/Class')
+
+---@class AInventoryManager : Class
 local AInventoryManager = Class:extended({
     class = 'AbstractClass AInventoryManager'
 })
@@ -7,17 +9,20 @@ local DependencyManager = require("libEx/DependencyManager")
 
 function AInventoryManager:new()
     local instance = self.super:new()
-    return self:extendedInstance(instance):init()
+    return self:extendedInstance(instance)
 end
 
-function AInventoryManager:init()
+---@type fun(robotApi: NativeRobotApi)
+function AInventoryManager:init(robotApi)
     self.containerHandlerList = {}
+    ---@type NativeRobotApi
+    self.robotApi = robotApi
     return self
 end
 
 ---@type fun():boolean
 ---@return boolean @service is done
-function AInventoryManager:toolMaintenance()
+function AInventoryManager:checkSelectedTool()
     self:noImplError()
 end
 
@@ -34,18 +39,27 @@ function AInventoryManager:selectDefaultTool()
     self:noImplError()
 end
 
+---@type fun(sampleStack:NativeStack, itemCount:number, container:AContainer):boolean
 function AInventoryManager:pullFromContainerStack(sampleStack, itemCount, container)
     self:noImplError()
 end
 
+---@type fun(slot:number, itemCount:number, container:AContainer):boolean
 function AInventoryManager:pullFromContainerSlot(slot, itemCount, container)
     self:noImplError()
 end
 
+---@type fun(count:number):boolean
 function AInventoryManager:pushToContainer(count)
-    self:noImplError()
+    return self.robotApi.drop(count)
 end
 
+---@type fun(count:number):boolean
+function AInventoryManager:pullToContainer(count)
+    return self.robotApi.suck(count)
+end
+
+---@type fun(slot:number, itemCount:number, container:AContainer):boolean, string @status, error
 function AInventoryManager:pushToContainerSlot(slot, count, container)
     self:noImplError()
 end
@@ -53,6 +67,7 @@ end
 ---@protected
 ---@return AContainerHandler
 ---@param container AContainer
+---@type fun(container:AContainer):AContainerHandler
 function AInventoryManager:getContainerHandler(container)
     for containerClass, handler in pairs(self.containerHandlerList) do
         if container.class == containerClass then

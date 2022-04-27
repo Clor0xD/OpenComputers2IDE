@@ -4,33 +4,38 @@
 --- DateTime: 23.04.2022 21:32
 ---
 local Class = require('libEx/Class')
-local NativeRobotApi = require("robot")
+
+
 local NativeComputer = require('computer')
+local NativeRobotApi = require("robot")
 local Position = require('libEx/Position')
 
 NativeRobotApi.class = "Class NativeRobotApi"
 NativeComputer.class = "Class NativeComputer"
 
----@class RobotExtendedApi : Class_Computer_RobotAPI @extended native OC API robot, computer
+---@class RobotExtendedApi : NativeRobotApi @extended native OC API robot, computer
 local RobotExtendedApi = Class:extended(NativeComputer):extended(NativeRobotApi):extended({
     class = "Class RobotExtendedApi"
 })
 
 
 ---@type fun(init:table):RobotExtendedApi
-function RobotExtendedApi:new(init)
+function RobotExtendedApi:new(initTable)
     local instance = self.super:new()
-    return self:extendedInstance(instance):init(init)
+    return self:extendedInstance(instance):init(initTable)
 end
 
 -- startPosition {0,0,0,0} x,y,z,r / r : Position.side
 ---@type fun(init:table):RobotExtendedApi
 function RobotExtendedApi:init(initTable)
     local error = ":init(initTable) initTable."
+    ---@type Position
     self.position = Position:new(table.unpack(
         self:assert(initTable.startPosition, error..".startPosition is nil")
     ))    
-    self.inventoryManager = self:assert(initTable.inventoryManager, "initTable.inventoryManager is nil")
+    ---@type AInventoryManager
+    self.inventoryManager = self:assert(initTable.inventoryManager, "initTable.inventoryManager is nil"):init(self.super)
+    ---@type ABaseStation
     self.baseStation = self:assert(initTable.baseStation, "initTable.baseStation is nil")
     return self
 end
@@ -105,7 +110,9 @@ end
 
 ---@private
 function RobotExtendedApi:baseSwing(nativeSwingFunc, funcName)
-    self.inventoryManager:toolMaintenance()
+    if not self.inventoryManager:checkSelectedTool() then
+        --tool service
+    end
     local status, message = nativeSwingFunc()
     if not status then
         if message ~= 'entity' then           

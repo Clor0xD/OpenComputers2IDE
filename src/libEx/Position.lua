@@ -4,10 +4,13 @@
 --- DateTime: 20.04.2022 20:14
 ---
 local Class = require('libEx/Class')
+local sides = require("sides")
+---@class Position:Class
 local Position = Class:extended({
     class = "Class Position"
 })
 
+---@class PositionSide
 Position.side = {
     north = 0,
     east = 1,
@@ -18,6 +21,24 @@ Position.side = {
     posZ = 2,
     negX = 3
 }
+
+---@class PositionSidesBySide
+Position.sidesBySide = {
+    [Position.negZ] = sides.negz,
+    [Position.posX] = sides.posx,
+    [Position.posZ] = sides.posz,
+    [Position.negX] = sides.negx
+}
+
+---@class PositionSideBySides
+Position.sideBySides = {
+    [sides.negz] = Position.negZ,
+    [sides.posx] = Position.posX,
+    [sides.posz] = Position.posZ,
+    [sides.negx] = Position.negX
+}
+
+---@class PositionTurn
 Position.turn = {
     left = -1,
     forward = 0,
@@ -32,6 +53,21 @@ function Position:new(x, y, z, r)
         return self:extendedInstance(instance):set(0, 0, 0, 0)
     end
     return self:extendedInstance(instance):set(x, y, z, r)
+end
+
+---@type fun(adjacentPosition:Position):boolean,Sides
+function Position:getAdjacentSide(adjacentPosition)
+    local list, acc, check, result = table.pack(self.get("yzx"), adjacentPosition.get("yzx")), 0, 0, 0
+    for i = 1, 3 do
+        check = list[i + 3] - list[i]
+        if check == 1 then
+            result = i*2-1
+        elseif check == -1 then
+            result = i*2-2
+        end
+        acc = acc + check
+    end
+    return acc == 1 or acc == -1, result
 end
 
 function Position:add(position)
@@ -130,6 +166,11 @@ end
 
 function Position:turnLeft()
     self.r = (self.r - 1) % 4
+    return self
+end
+
+function Position:turnAround()
+    self.r = (self.r + 2) % 4
     return self
 end
 

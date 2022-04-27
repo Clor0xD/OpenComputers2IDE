@@ -3,6 +3,7 @@
 -- ©SofaSolt, 2020
 --
 
+---@class Class
 local Class
 
 if Class then

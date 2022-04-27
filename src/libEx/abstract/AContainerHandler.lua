@@ -16,15 +16,18 @@ function AContainerHandler:new()
     return self:extendedInstance(instance)
 end
 
-function AContainerHandler:suckFromStack(sampleStack, itemCount)
-    
+---@type fun(sampleStack:NativeStack, itemCount:number):boolean
+function AContainerHandler:pullToStack(sampleStack, itemCount)
+    self:noImplError()
 end
 
-function AContainerHandler:suckFromSlot(slot, itemCount)
-    
+---@type fun(slo:number, itemCount:number):boolean
+function AContainerHandler:pullToSlot(slot, itemCount)
+    self:noImplError()
 end
 
-function AContainerHandler:dropFromContainerSlot(slot, count)
+---@type fun(slo:number, itemCount:number):boolean, string @status, error
+function AContainerHandler:pushToContainerSlot(slot, itemCount)
     self:noImplError()
 end
 

@@ -10,18 +10,11 @@ function SimpleBaseStation:new(initTable)
     return self:extendedInstance(instance):init(initTable)
 end
 
-function SimpleBaseStation:init(initTable)
-    self.parkingPosition = initTable.parkingPosition
-    self.containerList = initTable.containerList
-    self.chargeStation = initTable.chargeStation
-    return self
-end  
-
-function getContainerListAdjacent(robotPosition)
+function SimpleBaseStation:getContainerListAdjacent(robotPosition)
     return self.containerList
 end
 
-function getChargerAdjacent(robotPosition)
+function SimpleBaseStation:getChargerAdjacent(robotPosition)
     return self.chargeStation
 end
 
