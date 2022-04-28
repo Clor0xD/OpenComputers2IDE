@@ -32,6 +32,8 @@ Position.sidesBySide = {
 
 ---@class PositionSideBySides
 Position.sideBySides = {
+    [sides.negy] = Position.negZ,
+    [sides.posy] = Position.negZ,
     [sides.negz] = Position.negZ,
     [sides.posx] = Position.posX,
     [sides.posz] = Position.posZ,

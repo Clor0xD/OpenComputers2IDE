@@ -49,6 +49,11 @@ function AInventoryManager:pullFromContainerSlot(slot, itemCount, container)
     self:noImplError()
 end
 
+---@type fun(slot:number, itemCount:number, container:AContainer):boolean, string @status, error
+function AInventoryManager:pushToContainerSlot(slot, count, container)
+    self:noImplError()
+end
+
 ---@type fun(count:number):boolean
 function AInventoryManager:pushToContainer(count)
     return self.robotApi.drop(count)
@@ -59,10 +64,12 @@ function AInventoryManager:pullToContainer(count)
     return self.robotApi.suck(count)
 end
 
----@type fun(slot:number, itemCount:number, container:AContainer):boolean, string @status, error
-function AInventoryManager:pushToContainerSlot(slot, count, container)
-    self:noImplError()
+---@param sampleStack NativeStack @optional
+---@return boolean @status
+function AInventoryManager:selectStack(sampleStack)
+    self:noImplError(':selectStack(sampleStack)')
 end
+
 
 ---@protected
 ---@return AContainerHandler

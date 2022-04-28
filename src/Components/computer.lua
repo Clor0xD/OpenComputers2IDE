@@ -1,5 +1,3 @@
-
----@class NativeComputerApi : Class 
 local computer = {}
 
 -- Plays a tone, useful to alert users via audible feedback.

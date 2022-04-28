@@ -30,7 +30,7 @@ function ExtendedInventoryManager:checkSelectedTool()
             result = false
         end
         InventoryController.equip()
-    end    
+    end
     return result
 end
 
@@ -58,19 +58,31 @@ function ExtendedInventoryManager:selectDefaultTool()
     return "GT_Drill"
 end
 
----@type fun(sampleStack:NativeStack, itemCount:number, container:AContainer):boolean
-function ExtendedInventoryManager:pullFromContainerStack(sampleStack, itemCount, container)   
-    return self:getContainerHandler(container):pullToStack(sampleStack, itemCount)
+function ExtendedInventoryManager:pullFromContainerStack(sampleStack, itemCount, container)
+    return self:getContainerHandler(container):pullToStack(sampleStack, itemCount, container)
 end
 
----@type fun(slot:number, itemCount:number, container:AContainer):boolean
-function ExtendedInventoryManager:pullFromContainerSlot(slot, itemCount, container)    
-    return self:getContainerHandler(container):pullToSlot(slot, itemCount)
+function ExtendedInventoryManager:pullFromContainerSlot(slot, itemCount, container)
+    return self:getContainerHandler(container):pullToSlot(slot, itemCount, container)
 end
 
----@type fun(slot:number, itemCount:number, container:AContainer):boolean, string @status, error
 function ExtendedInventoryManager:pushToContainerSlot(slot, itemCount, container)
-    return sefl:getContainerHandle(container):pushToContainerSlot(slot, itemCount)
+    return self:getContainerHandler(container):pushToContainerSlot(slot, itemCount, container)
+end
+
+---@param sampleStack NativeStack @optional
+---@return boolean @status
+function AInventoryManager:selectStack(sampleStack)
+    ---@type NativeStack    
+    local stack, size = nil, self.robotApi.inventorySize()   
+    for i = 1, size do
+        stack = InventoryController.getStackInInternalSlot(i)
+        if stack and stack.label == sampleStack.label then
+            self.robotApi.select(i)
+            return true
+        end
+    end
+    return false
 end
 
 return ExtendedInventoryManager

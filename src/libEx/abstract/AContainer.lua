@@ -1,7 +1,6 @@
 -- соглашение о именовании [ContainerName].."Container" пример ChestContainer
 -- соглашение о пути lib/implementation/container/
 local Class = require('libEx/Class')
-local InventoryController = require("component").inventory_controller
 local sides = require("sides")
 ---@class AContainer : Class
 local AContainer = Class:extended({
@@ -67,7 +66,10 @@ AContainer.facingEnum = {
 
 ---@type fun(globalRotation:Sides):Facing
 function AContainer:getFacing(globalRotation)
-    local facing = parkingPosition:getAdjacentSide(position)
+    if self.facing then
+        return self.facing
+    end
+    local facing = self.parkingPosition:getAdjacentSide(self.position)
     if facing > 1 then
         facing = sides.forward
     end
@@ -77,19 +79,6 @@ end
 ---@type fun(parkingPosition:Position, position:Position):PositionSide
 function AContainer:calcParkingGlobalRotation(parkingPosition, position)
     return position.sideBySides[parkingPosition:getAdjacentSide(position)]
-end
-
-function AContainer:pullToStack(sampleStack, itemCount)
-    ---@type NativeStack
-    local stack, size = nil, InventoryController.getInventorySize(self.facing)
-end
-
-function AContainer:pullToSlot(slot, itemCount)
-    return InventoryController.suckFromSlot(self.facing, slot, itemCount)
-end
-
-function AContainer:pushToContainerSlot(slot, itemCount)
-    return InventoryController.dropIntoSlot(self.facing, slot, itemCount)
 end
 
 ---@type fun(filter:ContainerItemFilter, stackSamle:NativeStack):boolean

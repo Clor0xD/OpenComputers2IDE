@@ -5,7 +5,6 @@
 ---
 local Class = require('libEx/Class')
 
-
 local NativeComputer = require('computer')
 local NativeRobotApi = require("robot")
 local Position = require('libEx/Position')
@@ -14,10 +13,18 @@ NativeRobotApi.class = "Class NativeRobotApi"
 NativeComputer.class = "Class NativeComputer"
 
 ---@class RobotExtendedApi : NativeRobotApi @extended native OC API robot, computer
+---@field position : Position
+---@field inventoryManager : AInventoryManager
+---@field baseStation : ABaseStation
+---@field generalBehavior : AGeneralBehavior
+---@field minEnergy : number
+---@field maxEnergy : number 
 local RobotExtendedApi = Class:extended(NativeComputer):extended(NativeRobotApi):extended({
     class = "Class RobotExtendedApi"
 })
 
+RobotExtendedApi.minEnergy = 3000
+RobotExtendedApi.maxEnergy = RobotExtendedApi.maxEnergy() - 300
 
 ---@type fun(init:table):RobotExtendedApi
 function RobotExtendedApi:new(initTable)
@@ -30,31 +37,33 @@ end
 function RobotExtendedApi:init(initTable)
     local error = ":init(initTable) initTable."
     ---@type Position
-    self.position = Position:new(table.unpack(
-        self:assert(initTable.startPosition, error..".startPosition is nil")
-    ))    
+    self.position = Position:new(table.unpack(self:assert(initTable.startPosition, error .. ".startPosition is nil")))
     ---@type AInventoryManager
-    self.inventoryManager = self:assert(initTable.inventoryManager, "initTable.inventoryManager is nil"):init(self.super)
+    self.inventoryManager = self:assert(initTable.inventoryManager, "initTable.inventoryManager is nil")
+        :init(self.super)
     ---@type ABaseStation
     self.baseStation = self:assert(initTable.baseStation, "initTable.baseStation is nil")
+    self.generalBehavior = self:assert(initTable.generalBehavior, "initTable.generalBehavior is nil"):init(self)
+    self.maxEnergy = self.maxEnergy() - 300
     return self
 end
 
 ---@type fun(removeObstacle:boolean, tries:number): boolean, string
-function RobotExtendedApi:forward( removeObstacle, tries)
+function RobotExtendedApi:forward(removeObstacle, tries)
     self:baseMove(self.super.forward(), ":forward()", self.swing, self.position.stepForward, removeObstacle, tries)
 end
 
 -- todo self.moveImpossibleHendler is plug
-function RobotExtendedApi:back( removeObstacle, tries)
-    self:baseMove(self.super.back(), ":back()", self.moveImpossibleHendler, self.position.stepBack, removeObstacle, tries)
+function RobotExtendedApi:back(removeObstacle, tries)
+    self:baseMove(self.super.back(), ":back()", self.moveImpossibleHendler, self.position.stepBack, removeObstacle,
+        tries)
 end
 
-function RobotExtendedApi:up( removeObstacle, tries)
+function RobotExtendedApi:up(removeObstacle, tries)
     self:baseMove(self.super.up(), ":up()", self.swingUp, self.position.stepUp, removeObstacle, tries)
 end
 
-function RobotExtendedApi:down( removeObstacle, tries)
+function RobotExtendedApi:down(removeObstacle, tries)
     self:baseMove(self.super.down(), ":down()", self.swingDown, self.position.stepDown, removeObstacle, tries)
 end
 
@@ -70,10 +79,27 @@ function RobotExtendedApi:swingDown()
     return self:baseSwing(self.super.swingDown, ":swingDown()")
 end
 
+---@param sampleStack NativeStack
+---@return boolean,string @status, error
+function RobotExtendedApi:place(sampleStack)
+    self:basePlace(self.super.place(), ":place()", sampleStack)
+end
+
+---@param sampleStack NativeStack
+---@return boolean,string @status, error
+function RobotExtendedApi:placeUp(sampleStack)
+    self:basePlace(self.super.placeUp(), ":placeUp()", sampleStack)
+end
+
+---@param sampleStack NativeStack
+---@return boolean,string @status, error
+function RobotExtendedApi:placeDown(sampleStack)
+    self:basePlace(self.super.placeDown(), ":placeDown()", sampleStack)
+end
+
 ---@param funcName string @ up, down, forward, back
 ---@param status boolean
 ---@param error string @ impossible move, not enough energy or robot.detect would return. https://ocdoc.cil.li/api:robot
----@type fun(funcName:string, status:boolean, error:string): boolean, string
 function RobotExtendedApi:moveImpossibleHendler(funcName, status, error)
     self:error(tostring(funcName) .. " move is impossible")
 end
@@ -82,8 +108,16 @@ function RobotExtendedApi:swingImpossibleHendler(funcName, status, message)
     self:error(":" .. funcName .. " " .. message .. " is impossible")
 end
 
+---@param funcName string
+---@param status boolean
+---@return boolean @status
+function RobotExtendedApi:noSuppliesHandler(funcName, status)
+    self:error(":" .. funcName .. " not enough supplies")
+end
+
 ---@private
 function RobotExtendedApi:baseMove(nativeMoveFunc, moveFuncName, swingFunc, movePositionFunc, removeObstacle, tries)
+    self:checkEnergy()
     local status, error = nativeMoveFunc()
     if status then
         -- self.position:stepForward()
@@ -110,13 +144,14 @@ end
 
 ---@private
 function RobotExtendedApi:baseSwing(nativeSwingFunc, funcName)
+    self:checkEnergy()
     if not self.inventoryManager:checkSelectedTool() then
-        --tool service
+        self.generalBehavior:toolService()
     end
     local status, message = nativeSwingFunc()
     if not status then
-        if message ~= 'entity' then           
-            for tool in self.inventoryManager:nextToolToRemoveBlock() do
+        if message ~= 'entity' then
+            for tool in self.inventoryManager:nextToolToRemoveBlockIterator() do
                 status, message = nativeSwingFunc()
                 if status then
                     break
@@ -127,6 +162,29 @@ function RobotExtendedApi:baseSwing(nativeSwingFunc, funcName)
                 return self:swingImpossibleHendler(funcName, status, error)
             end
         end
+    end
+end
+
+---@param nativePlaceFunc function
+---@param sampleStack NativeStack
+---@param funcName string
+---@return  boolean, string @status, error
+function RobotExtendedApi:basePlace(nativePlaceFunc, funcName, sampleStack)
+    self:checkEnergy()
+    if not self.inventoryManager:selectStack(sampleStack) then
+        local status = self.generalBehavior:inventoryRefill()
+        if not status then
+            return self:noSuppliesHandler(funcName, status)
+        end
+        self:assert(self.inventoryManager:selectStack(sampleStack), ":" .. funcName .. " not enough supplies")
+    end
+    return nativePlaceFunc()
+end
+
+---@return boolean @status
+function RobotExtendedApi:checkEnergy()
+    if self.energy() > self.minEnergy then
+        self.generalBehavior:recharge()
     end
 end
 
