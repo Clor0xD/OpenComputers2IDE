@@ -1,13 +1,10 @@
-local Class = require("libEx/Class")
-local IRunable = Class:extended({class = "Interface IRunable"})
+---@class IRunable
+local IRunable
 
-function IRunable:new()
-    local instance = self.super:new()
-    return self:extendedInstance(instance)
-end
+IRunable = {class = "Interface IRunable"}
 
 function IRunable:run(...) 
-    self:noImplError("run(...)")
+    self:noImplIntefaceError("run(...)", IRunable:getClassName())
 end
 
 return IRunable

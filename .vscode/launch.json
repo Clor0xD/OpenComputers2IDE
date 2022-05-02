@@ -1,0 +1,42 @@
+{
+    // Используйте IntelliSense, чтобы узнать о возможных атрибутах.
+    // Наведите указатель мыши, чтобы просмотреть описания существующих атрибутов.
+    // Для получения дополнительной информации посетите: https://go.microsoft.com/fwlink/?linkid=830387
+    // "version": "0.2.0",
+    // "configurations": [
+    //     {
+    //         "type": "LuaHelper-Debug",
+    //         "request": "launch",
+    //         "name": "LuaHelper-Attach",
+    //         "description": "通用模式,通常调试项目请选择此模式",
+    //         "cwd": "${workspaceFolder}",
+    //         "luaFileExtension": ".lua",
+    //         "connectionPort": 8818,
+    //         "stopOnEntry": true,
+    //         "useCHook": true,
+    //         "autoPathMode": true
+    //     },
+    //     {
+    //         "type": "LuaHelper-Debug",
+    //         "request": "launch",
+    //         "name": "main",
+    //         "description": "独立文件调试模式",
+    //         "luaPath": "C:/OpenComputers2IDE/lua53.exe",
+    //         "packagePath": [],
+    //         "luaFileExtension": ".lua",
+    //         "connectionPort": 8818,
+    //         "stopOnEntry": false,
+    //         "useCHook": true
+    //     }
+    // ]
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lua",
+            "request": "launch",
+            "name": "Launch",
+            "path": "${workspaceFolder}/src/?.lua",
+            "program": "${workspaceFolder}/src/main.lua"
+        }
+    ]
+}

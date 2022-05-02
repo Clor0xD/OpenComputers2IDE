@@ -12,89 +12,133 @@ local Position = require('libEx/Position')
 NativeRobotApi.class = "Class NativeRobotApi"
 NativeComputer.class = "Class NativeComputer"
 
+---@class RobotExApiInitTable
+---@field public startPosition Position
+---@field public inventoryManager AInventoryManager
+---@field public baseStation ABaseStation
+---@field public generalBehavior AGeneralBehavior
+
 ---@class RobotExtendedApi : NativeRobotApi @extended native OC API robot, computer
 ---@field position : Position
 ---@field inventoryManager : AInventoryManager
 ---@field baseStation : ABaseStation
 ---@field generalBehavior : AGeneralBehavior
----@field minEnergy : number
----@field maxEnergy : number 
+---@field minCharge : number
+---@field maxCharge : number
+---@field turnToTurnFunction : function[] 
 local RobotExtendedApi = Class:extended(NativeComputer):extended(NativeRobotApi):extended({
     class = "Class RobotExtendedApi"
 })
 
-RobotExtendedApi.minEnergy = 3000
-RobotExtendedApi.maxEnergy = RobotExtendedApi.maxEnergy() - 300
-
----@type fun(init:table):RobotExtendedApi
+---@return RobotExtendedApi
+---@param initTable RobotExApiInitTable
 function RobotExtendedApi:new(initTable)
-    local instance = self.super:new()
+    local instance = self.super:new()   
     return self:extendedInstance(instance):init(initTable)
 end
 
--- startPosition {0,0,0,0} x,y,z,r / r : Position.side
----@type fun(init:table):RobotExtendedApi
+---@return RobotExtendedApi
+---@param initTable RobotExApiInitTable
 function RobotExtendedApi:init(initTable)
     local error = ":init(initTable) initTable."
-    ---@type Position
-    self.position = Position:new(table.unpack(self:assert(initTable.startPosition, error .. ".startPosition is nil")))
-    ---@type AInventoryManager
-    self.inventoryManager = self:assert(initTable.inventoryManager, "initTable.inventoryManager is nil")
-        :init(self.super)
-    ---@type ABaseStation
+    self.position = self:assert(initTable.startPosition, error .. ".startPosition is nil")
+    self.inventoryManager = self:assert(initTable.inventoryManager, "initTable.inventoryManager is nil"):setRobotApi(self.super)
     self.baseStation = self:assert(initTable.baseStation, "initTable.baseStation is nil")
-    self.generalBehavior = self:assert(initTable.generalBehavior, "initTable.generalBehavior is nil"):init(self)
-    self.maxEnergy = self.maxEnergy() - 300
+    self.generalBehavior = self:assert(initTable.generalBehavior, "initTable.generalBehavior is nil"):setRobotExApi(self)
+    self.maxCharge = self.maxEnergy() - 300
     return self
 end
 
----@type fun(removeObstacle:boolean, tries:number): boolean, string
-function RobotExtendedApi:forward(removeObstacle, tries)
-    self:baseMove(self.super.forward(), ":forward()", self.swing, self.position.stepForward, removeObstacle, tries)
+---@follows a position according to the sequence of axes in the movePattern
+---@param position Position
+---@param movePattern function[] @function[3] RobotExtendedApi goToX/goToY/goToZ
+function RobotExtendedApi:goTo(position, movePattern, toTurn, removeObstacle, tries, disableEnergyCheck)
+    local dx, dy, dz = position:subCortage(self.position)    
+    for i = 1, 3 do
+        movePattern[i](self, dx, dy, dz, removeObstacle, tries, disableEnergyCheck)
+    end
+    if toTurn then
+        self:rotateTo(position.r)
+    end
+end
+
+---@param removeObstacle boolean
+---@param tries number
+---@return boolean, string @status, error
+function RobotExtendedApi:forward(removeObstacle, tries, disableEnergyCheck)
+    return self:baseMove(self.super.forward, ":forward()", self.swing, self.position.stepForward, removeObstacle, tries, disableEnergyCheck)
 end
 
 -- todo self.moveImpossibleHendler is plug
-function RobotExtendedApi:back(removeObstacle, tries)
-    self:baseMove(self.super.back(), ":back()", self.moveImpossibleHendler, self.position.stepBack, removeObstacle,
-        tries)
+---@param removeObstacle boolean
+---@param tries number
+---@return boolean, string @status, error
+function RobotExtendedApi:back(removeObstacle, tries, disableEnergyCheck)
+    return self:baseMove(self.super.back, ":back()", self.moveImpossibleHendler, self.position.stepBack, removeObstacle,
+        tries, disableEnergyCheck)
 end
 
-function RobotExtendedApi:up(removeObstacle, tries)
-    self:baseMove(self.super.up(), ":up()", self.swingUp, self.position.stepUp, removeObstacle, tries)
+---@param removeObstacle boolean
+---@param tries number
+---@return boolean, string @status, error
+function RobotExtendedApi:up(removeObstacle, tries, disableEnergyCheck)
+   return self:baseMove(self.super.up, ":up()", self.swingUp, self.position.stepUp, removeObstacle, tries, disableEnergyCheck)
 end
 
-function RobotExtendedApi:down(removeObstacle, tries)
-    self:baseMove(self.super.down(), ":down()", self.swingDown, self.position.stepDown, removeObstacle, tries)
+---@param removeObstacle boolean
+---@param tries number
+---@return boolean, string @status, error
+function RobotExtendedApi:down(removeObstacle, tries, disableEnergyCheck)
+    return self:baseMove(self.super.down, ":down()", self.swingDown, self.position.stepDown, removeObstacle, tries, disableEnergyCheck)
 end
 
-function RobotExtendedApi:swing()
-    return self:baseSwing(self.super.swing, ":swing()")
+function RobotExtendedApi:left()
+    self.turnLeft()
+    self.position:turnLeft()
 end
 
-function RobotExtendedApi:swingUp()
-    return self:baseSwing(self.super.swingUp, ":swingUp()")
+function RobotExtendedApi:right()
+    self.turnRight()
+    self.position:turnRight()
 end
 
-function RobotExtendedApi:swingDown()
-    return self:baseSwing(self.super.swingDown, ":swingDown()")
+function RobotExtendedApi:around()
+    self:right()
+    self:right()
+end
+
+function RobotExtendedApi:rotateTo(globalRotation)
+    self.turnToTurnFunction[self.position:calculateTurn(globalRotation)](self)
+end
+
+function RobotExtendedApi:swing(disableEnergyCheck)
+    return self:baseSwing(self.super.swing, ":swing()",disableEnergyCheck)
+end
+
+function RobotExtendedApi:swingUp(disableEnergyCheck)
+    return self:baseSwing(self.super.swingUp, ":swingUp()",disableEnergyCheck)
+end
+
+function RobotExtendedApi:swingDown(disableEnergyCheck)
+    return self:baseSwing(self.super.swingDown, ":swingDown()",disableEnergyCheck)
 end
 
 ---@param sampleStack NativeStack
 ---@return boolean,string @status, error
 function RobotExtendedApi:place(sampleStack)
-    self:basePlace(self.super.place(), ":place()", sampleStack)
+    self:basePlace(self.super.place, ":place()", sampleStack)
 end
 
 ---@param sampleStack NativeStack
 ---@return boolean,string @status, error
 function RobotExtendedApi:placeUp(sampleStack)
-    self:basePlace(self.super.placeUp(), ":placeUp()", sampleStack)
+    self:basePlace(self.super.placeUp, ":placeUp()", sampleStack)
 end
 
 ---@param sampleStack NativeStack
 ---@return boolean,string @status, error
 function RobotExtendedApi:placeDown(sampleStack)
-    self:basePlace(self.super.placeDown(), ":placeDown()", sampleStack)
+    self:basePlace(self.super.placeDown, ":placeDown()", sampleStack)
 end
 
 ---@param funcName string @ up, down, forward, back
@@ -116,8 +160,15 @@ function RobotExtendedApi:noSuppliesHandler(funcName, status)
 end
 
 ---@private
-function RobotExtendedApi:baseMove(nativeMoveFunc, moveFuncName, swingFunc, movePositionFunc, removeObstacle, tries)
-    self:checkEnergy()
+---@param nativeMoveFunc function
+---@param moveFuncName string
+---@param swingFunc function
+---@param movePositionFunc function
+---@param removeObstacle boolean
+---@param tries number
+---@return boolean, string @status, error
+function RobotExtendedApi:baseMove(nativeMoveFunc, moveFuncName, swingFunc, movePositionFunc, removeObstacle, tries, disableEnergyCheck)    
+    self:checkRecharge(disableEnergyCheck)        
     local status, error = nativeMoveFunc()
     if status then
         -- self.position:stepForward()
@@ -127,7 +178,7 @@ function RobotExtendedApi:baseMove(nativeMoveFunc, moveFuncName, swingFunc, move
     if removeObstacle then
         while not tries or tries > 0 do
             -- self:swing()
-            swingFunc(self)
+            swingFunc(self, disableEnergyCheck)
             status, error = nativeMoveFunc()
             if status then
                 -- self.position:stepForward()
@@ -143,10 +194,10 @@ function RobotExtendedApi:baseMove(nativeMoveFunc, moveFuncName, swingFunc, move
 end
 
 ---@private
-function RobotExtendedApi:baseSwing(nativeSwingFunc, funcName)
-    self:checkEnergy()
+function RobotExtendedApi:baseSwing(nativeSwingFunc, funcName, disableEnergyCheck)
+    self:checkRecharge(disableEnergyCheck)
     if not self.inventoryManager:checkSelectedTool() then
-        self.generalBehavior:toolService()
+        self.generalBehavior:toolService(self)
     end
     local status, message = nativeSwingFunc()
     if not status then
@@ -169,10 +220,10 @@ end
 ---@param sampleStack NativeStack
 ---@param funcName string
 ---@return  boolean, string @status, error
-function RobotExtendedApi:basePlace(nativePlaceFunc, funcName, sampleStack)
-    self:checkEnergy()
+function RobotExtendedApi:basePlace(nativePlaceFunc, funcName, sampleStack, disableEnergyCheck)
+    self:checkRecharge(disableEnergyCheck)
     if not self.inventoryManager:selectStack(sampleStack) then
-        local status = self.generalBehavior:inventoryRefill()
+        local status = self.generalBehavior:inventoryRefill(self)
         if not status then
             return self:noSuppliesHandler(funcName, status)
         end
@@ -181,11 +232,64 @@ function RobotExtendedApi:basePlace(nativePlaceFunc, funcName, sampleStack)
     return nativePlaceFunc()
 end
 
----@return boolean @status
-function RobotExtendedApi:checkEnergy()
-    if self.energy() > self.minEnergy then
-        self.generalBehavior:recharge()
+---@param count number
+---@param moveFunction function
+---@return boolean, string, number @status, error, count
+function RobotExtendedApi:multiStep(count, moveFunction, ...)
+    if count == 0 then
+        return true, nil, 0
+    end
+    local result, error
+    for step = 1, count, 1 do
+        result, error = moveFunction(self, ...)
+        if not result then
+            return result, error, step - 1
+        end
+    end
+    return result, error, count
+end
+
+function RobotExtendedApi:goToX(dx, _, _, ...)
+    if dx > 0 then
+        self:rotateTo(self.position.side.posX)
+    elseif dx < 0 then
+        self:rotateTo(self.position.side.negX)       
+    end    
+    self:multiStep(math.abs(dx), self.forward, ...)
+end
+
+function RobotExtendedApi:goToY(_, dy, _, ...)
+    if dy > 0 then
+        self:multiStep(math.abs(dy), self.up, ...)
+    else
+        self:multiStep(math.abs(dy), self.down, ...)
     end
 end
+
+function RobotExtendedApi:goToZ(_, _, dz, ...)  
+    if dz > 0 then
+        self:rotateTo(self.position.side.posZ)
+    elseif dz < 0 then
+        self:rotateTo(self.position.side.negZ)       
+    end    
+    self:multiStep(math.abs(dz), self.forward, ...)
+end
+
+---@return void @nil
+function RobotExtendedApi:checkRecharge(disableCheck)
+    if not disableCheck and self.energy() < self.minCharge then
+        self.generalBehavior:recharge(self)
+    end
+end
+
+---@return boolean @status
+function RobotExtendedApi:isCharged()
+    return self.energy() >= self.maxCharge       
+end
+
+RobotExtendedApi.movePatternZXY = {RobotExtendedApi.nop, RobotExtendedApi.goToZ, RobotExtendedApi.goToX, RobotExtendedApi.goToY}
+RobotExtendedApi.turnToTurnFunction = { [0] = RobotExtendedApi.nop, [1] = RobotExtendedApi.right, [2] = RobotExtendedApi.around, [3] = RobotExtendedApi.left }
+RobotExtendedApi.minCharge = 3000
+RobotExtendedApi.maxCharge = RobotExtendedApi.maxEnergy() - 300
 
 return RobotExtendedApi

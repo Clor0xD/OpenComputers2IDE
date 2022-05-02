@@ -1,10 +1,13 @@
 local Class = require('libEx/Class')
 
 ---@class AInventoryManager : Class
+---@field containerHandlerList AContainerHandler[]
+---@field robotApi NativeRobotApi
 local AInventoryManager = Class:extended({
     class = 'AbstractClass AInventoryManager'
 })
 local ContainerHandler = require("libEx/abstract/AContainerHandler")
+local AContainer = require("libEx/abstract/AContainer")
 local DependencyManager = require("libEx/DependencyManager")
 
 function AInventoryManager:new()
@@ -13,8 +16,7 @@ function AInventoryManager:new()
 end
 
 ---@type fun(robotApi: NativeRobotApi)
-function AInventoryManager:init(robotApi)
-    self.containerHandlerList = {}
+function AInventoryManager:setRobotApi(robotApi)
     ---@type NativeRobotApi
     self.robotApi = robotApi
     return self
@@ -29,6 +31,15 @@ end
 -- iterator
 ---@type fun():function
 function AInventoryManager:nextToolToRemoveBlockIterator()
+    self:noImplError()
+    return function()
+        self:noImplError()
+    end
+end
+
+-- iterator
+---@type fun():function
+function AInventoryManager:chargeGToolIterator()
     self:noImplError()
     return function()
         self:noImplError()
@@ -54,14 +65,33 @@ function AInventoryManager:pushToContainerSlot(slot, count, container)
     self:noImplError()
 end
 
----@type fun(count:number):boolean
-function AInventoryManager:pushToContainer(count)
-    return self.robotApi.drop(count)
+---@return table<string,number>@NativeStack.label, totalCount
+function AInventoryManager:getInventoryList()
+    self:noImplError()
 end
 
----@type fun(count:number):boolean
-function AInventoryManager:pullToContainer(count)
-    return self.robotApi.suck(count)
+---@param facing Facing
+---@param count number
+function AInventoryManager:pushToContainer(facing, count)
+    if facing == AContainer.facingEnum.front then
+        return self.robotApi.drop(count)
+    elseif facing == AContainer.facingEnum.top then
+        return self.robotApi.dropUp(count)
+    elseif facing == AContainer.facingEnum.bottom then
+        return self.robotApi.dropDown(count)
+    end
+end
+
+---@param facing Facing
+---@param count number
+function AInventoryManager:pullToContainer(facing, count)
+    if facing == AContainer.facingEnum.front then
+        return self.robotApi.suck(count)
+    elseif facing == AContainer.facingEnum.top then
+        return self.robotApi.suckUp(count)
+    elseif facing == AContainer.facingEnum.bottom then
+        return self.robotApi.suckDown(count)
+    end    
 end
 
 ---@param sampleStack NativeStack @optional
@@ -70,18 +100,18 @@ function AInventoryManager:selectStack(sampleStack)
     self:noImplError(':selectStack(sampleStack)')
 end
 
-
 ---@protected
 ---@return AContainerHandler
 ---@param container AContainer
----@type fun(container:AContainer):AContainerHandler
 function AInventoryManager:getContainerHandler(container)
+    self:createFieldIfMissing("containerHandlerList", {})
     for containerClass, handler in pairs(self.containerHandlerList) do
         if container.class == containerClass then
             return handler
         end
     end
-    local result = DependencyManager:getHandler(container,ContainerHandler, ":getContainerHandle(container) ")
+    local result = DependencyManager:getHandler(container, ContainerHandler,
+        self.class .. ":getContainerHandle(container) ")
     self.containerHandlerList[container.class] = result
     return result
 end

@@ -4,9 +4,15 @@ local Class = require('libEx/Class')
 local ABaseStation = Class:extended({class = 'AbstractClass ABaseStation'})
 
 ABaseStation.path = "libEx/implementation/baseStatinon/"
-ABaseStation.suffix = "BaseStatinon"
+ABaseStation.suffix = "BaseStation"
 
----@type fun():ABaseStation
+---@class ABaseStationInitTable
+---@field public parkingPosition Position
+---@field public containerList AContainer[]
+---@field public chargeStation AContainer
+
+
+---@param initTable ABaseStationInitTable
 ---@return ABaseStation
 function ABaseStation:new(initTable)
     local instance = self.super:new()

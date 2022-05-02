@@ -10,11 +10,10 @@ local ExtendedInventoryManager = AInventoryManager:extended({
 ---@return ExtendedInventoryManager
 function ExtendedInventoryManager:new()
     local instance = self.super:new()
-    return self:extendedInstance(instance)
+    return self:extendedInstance(instance):init()
 end
 
-function ExtendedInventoryManager:init(robotApi)
-    self.super:init(robotApi)
+function ExtendedInventoryManager:init()
     self.isGtDrillEquip = true
     self.toolIndex = 0
     return self
@@ -50,6 +49,21 @@ function ExtendedInventoryManager:nextToolToRemoveBlockIterator()
     end
 end
 
+function ExtendedInventoryManager:chargeGToolIterator()
+    return function() -- next()
+        if self.toolIndex < 1 then
+            if not self.isGtDrillEquip then
+                InventoryController.equip()                
+            end
+            self.toolIndex = self.toolIndex + 1
+            return true
+        else
+            self.toolIndex = 0
+            return nil
+        end
+    end
+end
+
 function ExtendedInventoryManager:selectDefaultTool()
     if not self.isGtDrillEquip then
         InventoryController.equip()
@@ -59,22 +73,39 @@ function ExtendedInventoryManager:selectDefaultTool()
 end
 
 function ExtendedInventoryManager:pullFromContainerStack(sampleStack, itemCount, container)
-    return self:getContainerHandler(container):pullToStack(sampleStack, itemCount, container)
+    return self:getContainerHandler(container):pullFromStack(sampleStack, itemCount, container)
 end
 
 function ExtendedInventoryManager:pullFromContainerSlot(slot, itemCount, container)
-    return self:getContainerHandler(container):pullToSlot(slot, itemCount, container)
+    return self:getContainerHandler(container):pullFromSlot(slot, itemCount, container)
 end
 
 function ExtendedInventoryManager:pushToContainerSlot(slot, itemCount, container)
     return self:getContainerHandler(container):pushToContainerSlot(slot, itemCount, container)
 end
 
+---@return table<string,number>@NativeStack.label, totalCount
+function ExtendedInventoryManager:getInventoryList()
+    ---@type NativeStack
+    local stack, result = nil, {}
+    for slot = 1, self.robotApi.inventorySize() do
+        stack = InventoryController.getStackInInternalSlot(slot)
+        if stack and stack.label then
+            if result[stack.label] then
+                result[stack.label] = result[stack.label] + stack.size
+            else
+                result[stack.label] = stack.size
+            end
+        end       
+    end
+    return result
+end
+
 ---@param sampleStack NativeStack @optional
 ---@return boolean @status
 function AInventoryManager:selectStack(sampleStack)
     ---@type NativeStack    
-    local stack, size = nil, self.robotApi.inventorySize()   
+    local stack, size = nil, self.robotApi.inventorySize()
     for i = 1, size do
         stack = InventoryController.getStackInInternalSlot(i)
         if stack and stack.label == sampleStack.label then

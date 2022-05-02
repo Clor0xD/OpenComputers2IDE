@@ -5,7 +5,12 @@
 ---
 local Class = require('libEx/Class')
 local sides = require("sides")
+
 ---@class Position:Class
+---@field public x number
+---@field public y number
+---@field public z number
+---@field public r PositionSide
 local Position = Class:extended({
     class = "Class Position"
 })
@@ -24,20 +29,20 @@ Position.side = {
 
 ---@class PositionSidesBySide
 Position.sidesBySide = {
-    [Position.negZ] = sides.negz,
-    [Position.posX] = sides.posx,
-    [Position.posZ] = sides.posz,
-    [Position.negX] = sides.negx
+    [Position.side.negZ] = sides.negz,
+    [Position.side.posX] = sides.posx,
+    [Position.side.posZ] = sides.posz,
+    [Position.side.negX] = sides.negx
 }
 
 ---@class PositionSideBySides
 Position.sideBySides = {
-    [sides.negy] = Position.negZ,
-    [sides.posy] = Position.negZ,
-    [sides.negz] = Position.negZ,
-    [sides.posx] = Position.posX,
-    [sides.posz] = Position.posZ,
-    [sides.negx] = Position.negX
+    [sides.negy] = Position.side.negZ,
+    [sides.posy] = Position.side.negZ,
+    [sides.negz] = Position.side.negZ,
+    [sides.posx] = Position.side.posX,
+    [sides.posz] = Position.side.posZ,
+    [sides.negx] = Position.side.negX
 }
 
 ---@class PositionTurn
@@ -47,8 +52,15 @@ Position.turn = {
     right = 1,
     around = 2,
     back = 2
+    -- left = 3
 }
 
+
+---@param x number
+---@param y number
+---@param z number
+---@param r PositionSide
+---@return Position
 function Position:new(x, y, z, r)
     local instance = self.super:new()
     if not x then
@@ -57,21 +69,25 @@ function Position:new(x, y, z, r)
     return self:extendedInstance(instance):set(x, y, z, r)
 end
 
----@type fun(adjacentPosition:Position):boolean,Sides
-function Position:getAdjacentSide(adjacentPosition)
-    local list, acc, check, result = table.pack(self.get("yzx"), adjacentPosition.get("yzx")), 0, 0, 0
+---@param adjacentPosition Position
+---@return boolean,Sides @staus globalRotation:Sides_openOs
+function Position:getAdjacentSide(adjacentPosition)    
+    local this, adjacent, acc, check, result = self:get("yzx", true), adjacentPosition:get("yzx", true), 0, 0, 0
     for i = 1, 3 do
-        check = list[i + 3] - list[i]
+        check = adjacent[i] - this[i]
         if check == 1 then
-            result = i*2-1
+            result = i * 2 - 1
         elseif check == -1 then
-            result = i*2-2
+            result = i * 2 - 2
         end
         acc = acc + check
-    end
+    end   
     return acc == 1 or acc == -1, result
 end
 
+---@ changes self
+---@param position Position
+---@return Position @self
 function Position:add(position)
     self.x = self.x + position.x
     self.y = self.y + position.y
@@ -79,11 +95,21 @@ function Position:add(position)
     return self
 end
 
+---@ changes self
+---@param position Position
+---@return Position @self
 function Position:sub(position)
     self.x = self.x - position.x
     self.y = self.y - position.y
     self.z = self.z - position.z
     return self
+end
+
+---@ does not change sefl, args
+---@param position Position
+---@return number, number, number @x,y,zlua
+function Position:subCortage(position)
+    return self.x - position.x, self.y - position.y, self.z - position.z
 end
 
 function Position:coordsEquels(position)
@@ -95,14 +121,20 @@ function Position:equels(position)
                (self.x == position.x and self.y == position.y and self.z == position.z and self.r == position.r)
 end
 
-function Position:get(format)
+function Position:get(format, isPack)
     if format == nil then
+        if isPack then
+            return {self.x, self.y, self.z, self.r}
+        end
         return self.x, self.y, self.z, self.r
     end
     if self:assertFormat(format) then
         local result = {}
         for key in format:gmatch '[xyzr]' do
             table.insert(result, self[key])
+        end
+        if isPack then
+            return result
         end
         return table.unpack(result)
     end
@@ -194,6 +226,10 @@ function Position:stepBack()
     return self:stepBase(-1)
 end
 
+function Position:calculateTurn(globalRotation)
+    return ((globalRotation - self.r) + 4) % 4
+end
+
 ---@private
 function Position:assertFormat(format, message)
     if not format or type(format) ~= 'string' then
@@ -226,6 +262,15 @@ function Position:stepBase(dir)
     elseif self.r == self.side.posX then
         self.x = self.x + dir
     end
+    return self
+end
+
+function Position:toStringDebug()
+    return "x: "..tostring(self.x).." y:"..tostring(self.y).." z:"..tostring(self.z).." r:"..tostring(self.r)
+end
+
+function Position:print()
+    print(self:toStringDebug())
     return self
 end
 

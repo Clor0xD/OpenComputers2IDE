@@ -1,8 +1,14 @@
 local Class = require('libEx/Class')
 
----@class AGeneralBehavior : Class
----@field protected robotExApi RobotExtendedApi
-local AGeneralBehavior = Class:extended({class = 'AbstractClass AGeneralBehavior'})
+---@class AGeneralBehavior : Class, IRunable, IRobotServiceHandler
+---@field public robotExApi RobotExtendedApi
+---@field public baseStatinonHandlerList ABaseStationHandler[]
+local AGeneralBehavior = Class:extended({
+    class = 'AbstractClass AGeneralBehavior'
+}):implements(require("libEx/interface/IRunable"), require("libEx/interface/IRobotServiceHandler"))
+
+local DependencyManager = require("libEx/DependencyManager")
+local BaseStationHandler = require("libEx/abstract/ABaseStationHandler")
 
 ---@return AGeneralBehavior
 function AGeneralBehavior:new()
@@ -12,27 +18,26 @@ end
 
 ---@param robotExApi RobotExtendedApi
 ---@return AGeneralBehavior
-function AGeneralBehavior:init(robotExApi)
-    self.robotExApi = robotExApi
+function AGeneralBehavior:setRobotExApi(robotExApi)
+    -- self:assertInstance(":setRobotExApi(robotExApi) "..self:getClassName().." is not instanse")
+    self.robotExApi = robotExApi    
     return self
 end
 
----@return void @nil
-function AGeneralBehavior:toolService()
-    self:noImplError(':toolService()')
+---@protected
+---@return ABaseStationHandler
+---@param baseStation ABaseStation
+function AGeneralBehavior:getBaseStationHandler(baseStation)
+    self:createFieldIfMissing("baseStatinonHandlerList", {})   
+    for baseStatinonClass, handler in pairs(self.baseStatinonHandlerList) do
+        if baseStation.class == baseStatinonClass then
+            return handler
+        end
+    end
+    local result = DependencyManager:getHandler(baseStation, BaseStationHandler,
+        self.class .. ":getBaseStationHandler(baseStation) ")
+    self.baseStatinonHandlerList[baseStation.class] = result    
+    return result
 end
 
----@return boolean @status
-function AGeneralBehavior:inventoryRefill()
-    self:noImplError(':inventoryRefill()')
-end
-
----@return void @nil
-function AGeneralBehavior:recharge()
-    self:noImplError(':recharge()')
-end
-
-
-
-
-return AGeneralBehavior 
+return AGeneralBehavior

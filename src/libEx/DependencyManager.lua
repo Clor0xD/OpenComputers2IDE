@@ -14,8 +14,9 @@ function DependencyManager:getHandler(descriptorInstance, AHandler, errorMessage
     local modName = AHandler.path .. string.gsub(descriptorInstance:getClassName(), descriptorInstance.suffix, AHandler.suffix)
     local status, result = xpcall(function() return require(modName) end, debug.traceback)
     if not status then
-        local error = result.."\n"..self:tostring()..errorMessage..modName.."  not found"
+        local error = result.."\n"..errorMessage..modName.." not found"
         -- todo logger 
+        _G.error(error)
         os.exit(error)
     end   
     return result

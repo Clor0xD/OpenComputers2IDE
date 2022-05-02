@@ -4,6 +4,9 @@
 --
 
 ---@class Class
+---@field public class string
+---@field public super Class
+---@field public isInstance boolean
 local Class
 
 if Class then
@@ -12,6 +15,8 @@ end
 
 Class = {}
 Class.class = "Class Class"
+Class.isInstance = false
+Class.super = Class
 
 function Class:tostring()
     return tostring(self) .. " " .. self.class
@@ -26,6 +31,23 @@ function Class:extended (child) -- child = {}
     child.super = self
     setmetatable(child, { __index = self, isInstance = false})
     return child
+end
+
+---@class Interface
+---@field public class string
+
+---@param ... Interface
+function Class:implements(...)
+     ---@type Interface[]   
+    local interfaceList = table.pack(...)
+    for _,interface in ipairs(interfaceList) do       
+        interface.super = self.super        
+        setmetatable(interface, { __index = self.super, isInstance = false})
+
+        self.super = interface
+        setmetatable(self, { __index = interface, isInstance = false})
+    end
+    return self
 end
 
 function Class:extendedInstance(instance)
@@ -46,6 +68,13 @@ function Class:noImplError(funcName)
         funcName = 'unknownFunc'
     end
     error(self:tostring() .. ':' .. funcName .. ' no implementation')
+end
+
+function Class:noImplIntefaceError(funcName, interfaceName)
+    if not funcName then
+        funcName = 'unknownIntefaceFunc'
+    end
+    error(self:tostring() .. ':' .. funcName .. ' no implementation '..interfaceName..":"..funcName)
 end
 
 function Class:assert(param, message)
@@ -86,7 +115,7 @@ function Class:error(message)
     error(self:tostring()..message)
 end
 
-function Class:nop()
+function Class.nop()
     
 end
 
@@ -99,7 +128,34 @@ function Class:getClassLevel()
     local type = string.gmatch(self.class, "([%a%d].+)%s(.+)")()
     return type
 end
---setmetatable(Class, {__call = Class.call})
+
+function Class:assertInstance(message)
+    if self.isInstance then
+        return true
+    end
+    self:error(message)
+end
+
+function Class:assertSuperParentClass(param, sampleClass, message)
+    ---@type Class
+    local temp = param
+    while temp.class ~= Class.class do
+        if temp.class == sampleClass then
+            return param
+        end
+        temp = temp.super
+    end
+    self:error(message.." "..param.class.." not extended "..sampleClass)
+end
+
+
+---@param fieldName string
+---@param fileldValue any
+function Class:createFieldIfMissing(fieldName, fileldValue)
+    if self[fieldName] == nil then
+        self[fieldName] = fileldValue
+    end
+end
 
 return Class
 

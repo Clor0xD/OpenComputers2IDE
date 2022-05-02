@@ -1,10 +1,9 @@
 local Class = require('libEx/Class')
 
----@class ABaseStationHandler : Class
-local ABaseStationHandler = Class:extended({class = 'AbstractClass ABaseStationHandler'})
-
-ABaseStation.path = "libEx/implementation/handler/"
-ABaseStation.suffix = "BaseStatinonHandler"
+---@class ABaseStationHandler : Class, IRobotServiceHandler
+local ABaseStationHandler = Class:extended({class = 'AbstractClass ABaseStationHandler'}):implements(require("libEx/interface/IRobotServiceHandler"))
+ABaseStationHandler.path = "libEx/implementation/handler/"
+ABaseStationHandler.suffix = "BaseStationHandler"
 
 ---@type fun():ABaseStationHandler
 ---@return ABaseStationHandler

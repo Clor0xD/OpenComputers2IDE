@@ -21,7 +21,7 @@ end
 ---@param size number @optional
 ---@return number @slot or nil
 function AContainerHandler:searchStackSlot(sampleStack, container, offset, size)
-    ---@type NativeStack    
+    ---@type NativeStack      
     local stack, temp = nil,  InventoryController.getInventorySize(container.facing)
     if not offset then
         offset = 1
@@ -30,7 +30,7 @@ function AContainerHandler:searchStackSlot(sampleStack, container, offset, size)
         size = temp
     end
     for i = offset, size do
-        stack = InventoryController.getStackInSlot(container.facind, i)
+        stack = InventoryController.getStackInSlot(container.facing, i)
         if stack and stack.label == sampleStack.label then
             return i
         end
@@ -42,16 +42,16 @@ end
 ---@param itemCount number
 ---@param container AContainer
 ---@return boolean @true if at least one item was moved, false otherwise.
-function AContainerHandler:pullToStack(sampleStack, itemCount, container)
-    return InventoryController.suckFromSlot(container.facind, self:searchStackSlot(sampleStack,container), itemCount)
+function AContainerHandler:pullFromStack(sampleStack, itemCount, container)
+    return InventoryController.suckFromSlot(container.facing, self:searchStackSlot(sampleStack,container), itemCount)
 end
 
 ---@param slot number
 ---@param itemCount number
 ---@param container AContainer
 ---@return boolean @true if at least one item was moved, false otherwise.
-function AContainerHandler:pullToSlot(slot, itemCount, container)
-    return InventoryController.suckFromSlot(container.facind, slot, itemCount)
+function AContainerHandler:pullFromSlot(slot, itemCount, container)
+    return InventoryController.suckFromSlot(container.facing, slot, itemCount)
 end
 
 ---@param slot number

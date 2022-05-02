@@ -2,7 +2,14 @@
 -- соглашение о пути lib/implementation/container/
 local Class = require('libEx/Class')
 local sides = require("sides")
+
 ---@class AContainer : Class
+---@field public usage UsageType
+---@field public inputItemFilter ContainerItemFilter
+---@field public outputItemFilter ContainerItemFilter
+---@field public position Position
+---@field public parkingPosition Position
+---@field public facing Sides
 local AContainer = Class:extended({
     class = 'AbstractClass AContainer'
 })
@@ -32,27 +39,30 @@ AContainer.filterType = {
     blackList = "black"
 }
 
----@type fun(initTable:table):AContainer
+---@class AContainerInitTable
+---@field public usage UsageType
+---@field public inputItemFilter ContainerItemFilter
+---@field public outputItemFilter ContainerItemFilter
+---@field public position Position
+---@field public parkingPosition Position
+
+---@param initTable AContainerInitTable
+---@return AContainer
 function AContainer:new(initTable)
     local instance = self.super:new()
     return self:extendedInstance(instance):init(initTable)
 end
 
----@type fun(initTable:table):AContainer
+---@param initTable AContainerInitTable
+---@return AContainer
 function AContainer:init(initTable)
-    local error = ":init(initTable) initTable."
-    ---@type UsageType
-    self.usage = self:assertEnum(initTable.usage, self.usageType, error .. ".usage)")
-    ---@type ContainerItemFilter
-    self.inputItemFilter = self:assertFilter(initTable.inputItemFilter, error .. ".inputItemFilter)")
-    ---@type ContainerItemFilter
-    self.outputItemFilter = self:assertFilter(initTable.outputItemFilter, error .. ".outputItemFilter)")
-    ---@type Position
-    self.position = self:assert(initTable.position, error .. ".position)")
-    ---@type Position
-    self.parkingPosition = self:assert(initTable.parkingPosition, error .. ".parkingPosition)")
-    self.parkingPosition.r = self:calcParkingGlobalRotation(self.parkingPosition, self.position)
-    ---@type Sides
+    local error = ":init(initTable) initTable."   
+    self.usage = self:assertEnum(initTable.usage, self.usageType, error .. ".usage)")  
+    self.inputItemFilter = self:assertFilter(initTable.inputItemFilter, error .. ".inputItemFilter)") 
+    self.outputItemFilter = self:assertFilter(initTable.outputItemFilter, error .. ".outputItemFilter)") 
+    self.position = self:assert(initTable.position, error .. ".position)") 
+    self.parkingPosition = self:assert(initTable.parkingPosition, error .. ".parkingPosition)")    
+    self.parkingPosition.r = self:calcParkingGlobalRotation(self.parkingPosition, self.position)  
     self.facing = self:getFacing(self.parkingPosition, self.position)
     return self
 end
@@ -69,7 +79,7 @@ function AContainer:getFacing(globalRotation)
     if self.facing then
         return self.facing
     end
-    local facing = self.parkingPosition:getAdjacentSide(self.position)
+    local _,facing = self.parkingPosition:getAdjacentSide(self.position)
     if facing > 1 then
         facing = sides.forward
     end
@@ -78,7 +88,9 @@ end
 
 ---@type fun(parkingPosition:Position, position:Position):PositionSide
 function AContainer:calcParkingGlobalRotation(parkingPosition, position)
-    return position.sideBySides[parkingPosition:getAdjacentSide(position)]
+    local status, sides = parkingPosition:getAdjacentSide(position)
+    self:assert(status, ":calcParkingGlobalRotation(parkingPosition, position) incorrect position pair not adjacent")
+    return position.sideBySides[sides]
 end
 
 ---@type fun(filter:ContainerItemFilter, stackSamle:NativeStack):boolean

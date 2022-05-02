@@ -1,7 +1,7 @@
-local Parent = require('libEx/abstract/ABaseStation')
+local ABaseStation = require('libEx/abstract/ABaseStation')
 
 ---@class SimpleBaseStation : ABaseStation
-local SimpleBaseStation = Parent:extended({class = 'Class SimpleBaseStation'})
+local SimpleBaseStation = ABaseStation:extended({class = 'Class SimpleBaseStation'})
 
 ---@type fun():SimpleBaseStation
 ---@return SimpleBaseStation
