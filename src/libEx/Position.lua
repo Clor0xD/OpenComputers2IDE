@@ -55,7 +55,6 @@ Position.turn = {
     -- left = 3
 }
 
-
 ---@param x number
 ---@param y number
 ---@param z number
@@ -71,7 +70,7 @@ end
 
 ---@param adjacentPosition Position
 ---@return boolean,Sides @staus globalRotation:Sides_openOs
-function Position:getAdjacentSide(adjacentPosition)    
+function Position:getAdjacentSide(adjacentPosition)
     local this, adjacent, acc, check, result = self:get("yzx", true), adjacentPosition:get("yzx", true), 0, 0, 0
     for i = 1, 3 do
         check = adjacent[i] - this[i]
@@ -81,27 +80,41 @@ function Position:getAdjacentSide(adjacentPosition)
             result = i * 2 - 2
         end
         acc = acc + check
-    end   
+    end
     return acc == 1 or acc == -1, result
 end
 
 ---@ changes self
----@param position Position
+---@param positionORx Position
+---@param y number
+---@param z number
 ---@return Position @self
-function Position:add(position)
-    self.x = self.x + position.x
-    self.y = self.y + position.y
-    self.z = self.z + position.z
+function Position:add(positionORx, y, z)
+    if type(positionORx) == "table" then
+        self.x = self.x + positionORx.x
+        self.y = self.y + positionORx.y
+        self.z = self.z + positionORx.z
+        return self
+    end
+    self.x = self.x + positionORx
+    self.y = self.y + y
+    self.z = self.z + z
     return self
 end
 
 ---@ changes self
 ---@param position Position
 ---@return Position @self
-function Position:sub(position)
-    self.x = self.x - position.x
-    self.y = self.y - position.y
-    self.z = self.z - position.z
+function Position:sub(positionORx, y, z)
+    if type(positionORx) == "table" then
+        self.x = self.x - positionORx.x
+        self.y = self.y - positionORx.y
+        self.z = self.z - positionORx.z
+        return self
+    end
+    self.x = self.x - positionORx
+    self.y = self.y - y
+    self.z = self.z - z
     return self
 end
 
@@ -165,32 +178,61 @@ function Position:copy(position) -- returnPos:copy(currentPos)
     return self:set(position:get())
 end
 
-function Position:getCoordinatesUp()
+function Position:getCoordinatesUp(distance)
+    if not distance or distance == 0 then
+        distance = 1
+    end
     local x, y, z, r = self:get()
-    return x, y + 1, z, r
+    return x, y + distance, z, r
 end
 
-function Position:getCoordinatesDown()
+function Position:getCoordinatesDown(distance)
+    if not distance or distance == 0 then
+        distance = 1
+    end
     local x, y, z, r = self:get()
-    return x, y - 1, z, r
+    return x, y - distance, z, r
 end
 
-function Position:getCoordinatesLocalRotation(turn)
-    self:getCoordinatesGlobalRotation((turn + self.r) % 4)
+---@param turn PositionTurn
+function Position:getCoordinatesLocalRotation(turn, distance)   
+    self:getCoordinatesGlobalRotation((turn + self.r) % 4, distance)
 end
 
-function Position:getCoordinatesGlobalRotation(side)
+function Position:getCoordinatesGlobalRotation(side, distance)
+    if not distance or distance == 0 then
+        distance = 1
+    end
     local x, y, z, r = self:get()
     if side == self.side.negZ then
-        z = z - 1
+        z = z - distance
     elseif side == self.side.posZ then
-        z = z + 1
+        z = z + distance
     elseif side == self.side.negX then
-        x = x - 1
+        x = x - distance
     elseif side == self.side.posX then
-        x = x + 1
+        x = x + distance
     end
     return x, y, z, r
+end
+
+---@param turn PositionTurn
+function Position:shift(turn, distanceH, distanceV, isTurn)
+    turn = (turn + self.r) % 4
+    self.y = self.y + distanceV
+    if turn == self.side.negZ then
+        z = z - distanceH
+    elseif turn == self.side.posZ then
+        z = z + distanceH
+    elseif turn == self.side.negX then
+        x = x - distanceH
+    elseif turn == self.side.posX then
+        x = x + distanceH
+    end
+    if isTurn then
+        self.r = turn
+    end
+    return self
 end
 
 function Position:turnRight()
@@ -226,6 +268,7 @@ function Position:stepBack()
     return self:stepBase(-1)
 end
 
+---@param globalRotation PositionSide
 function Position:calculateTurn(globalRotation)
     return ((globalRotation - self.r) + 4) % 4
 end
@@ -266,7 +309,8 @@ function Position:stepBase(dir)
 end
 
 function Position:toStringDebug()
-    return "x: "..tostring(self.x).." y:"..tostring(self.y).." z:"..tostring(self.z).." r:"..tostring(self.r)
+    return "x: " .. tostring(self.x) .. " y:" .. tostring(self.y) .. " z:" .. tostring(self.z) .. " r:" ..
+               tostring(self.r)
 end
 
 function Position:print()

@@ -3,52 +3,45 @@ local AGeneralBehavior = require('libEx/abstract/AGeneralBehavior')
 ---@class SimpleBuilderBehavior : AGeneralBehavior
 ---@field public super AGeneralBehavior
 ---@field public sliceBuilder : ASliceBuilderBehavior
----@field public sliceOffsetMap : Position[] @delta position to next slice position
----@field public firstSlicePosition Position
 ---@field private returnPosition Position
 ---@field private slicePositionList : Position[]
+---@field parkingSlicePosition Position
 ---@field public blockList table<NativeStack,number>@NativeStack, totalCount
 local SimpleBuilderBehavior = AGeneralBehavior:extended({
     class = 'Class SimpleBuilderBehavior'
 })
 
-local Position = require("libEx/Position")
-
 ---@param sliceBuilder ASliceBuilderBehavior
 ---@return SimpleBuilderBehavior
-function SimpleBuilderBehavior:new()
+function SimpleBuilderBehavior:new(initTable)
     local instance = self.super:new()
-    return self:extendedInstance(instance)
+    return self:extendedInstance(instance):init(initTable)
 end
 
 ---@class SimpleBuilderBehaviorInitTable
 ---@field sliceBuilder ASliceBuilderBehavior
----@field sliceOffsetMap Position[]
+---@field sliceOffsetMap Position[] @delta position to next slice position first element zero offset
 ---@field firstSlicePosition Position
+---@field parkingSlicePosition Position
 ---@field blockList table<NativeStack,number>@optional
 
 ---@param initTable SimpleBuilderBehaviorInitTable
 ---@return SimpleBuilderBehavior @self
 function SimpleBuilderBehavior:init(initTable)
     self.sliceBuilder = initTable.sliceBuilder
-    self.firstSlicePosition = initTable.firstSlicePosition
-    self.sliceOffsetMap = initTable.sliceOffsetMap   
-    if not initTable.blockList then
-        self:calcBlockList()
-    else
-        self.blockList = initTable.blockList
+    self.parkingSlicePosition = initTable.parkingSlicePosition
+    self.returnPosition = initTable.firstSlicePosition
+    self.slicePositionList = initTable.sliceOffsetMap
+    self.slicePositionList[1]:add(initTable.firstSlicePosition)
+    for i = 2, #self.slicePositionList do
+        self.slicePositionList[i]:add(self.slicePositionList[i-1])
     end
-    self.returnPosition = Position:new()
-    self.slicePositionList = {
-        [1] = firstSlicePosition
-    }     
-    self.currentSlice = 1
-    self.returnSlice = 1    
+    self.blockList = initTable.blockList 
     return self
 end
 
 function SimpleBuilderBehavior:calcBlockList()    
-    self.blockList = {}
+    self.blockList = {}   
     local blockStackCount = self.robotExApi.inventorySize() // #(self.sliceBuilder.slice.stackList)    
     for index, stack in ipairs(self.sliceBuilder.slice.stackList) do
        self.blockList[stack] = blockStackCount * stack.maxSize
@@ -56,10 +49,17 @@ function SimpleBuilderBehavior:calcBlockList()
     return self
 end
 
----@return void @nil
-function SimpleBuilderBehavior:run()
+function SimpleBuilderBehavior:postInit()    
+    if not self.blockList then
+        self:calcBlockList()
+    end    
     self.currentSlice = 1
     self.returnSlice = 1
+end
+
+---@return void @nil
+function SimpleBuilderBehavior:run()
+   self:postInit()
 end
 
 ---@return void @nil
@@ -69,15 +69,17 @@ function SimpleBuilderBehavior:gotoBaseStation()
     for sliceIndex = self.currentSlice, 1, -1 do
         self.robotExApi:goTo(self.slicePositionList[sliceIndex], self.robotExApi.movePatternZXY, false, true, 100, true)
     end
-    self.robotExApi:goTo(self.robotExApi.baseStation.parkingPosition, self.robotExApi.movePatternZXY, true, true, 100, true)
+    self.robotExApi:goTo(self.parkingSlicePosition, self.robotExApi.movePatternZXY, false, true, 100, true)
+    self.robotExApi:goTo(self.robotExApi.baseStation.parkingPosition, self.robotExApi.movePatternZXY, false, true, 100, true)
 end
 
 ---@return void @nil
 function SimpleBuilderBehavior:gotoReturnPostion()
+    self.robotExApi:goTo(self.parkingSlicePosition, self.robotExApi.movePatternZXY, false, true, 100, true)
     for sliceIndex = 1, self.returnSlice do
         self.robotExApi:goTo(self.slicePositionList[sliceIndex], self.robotExApi.movePatternZXY, false, true, 100)
     end
-    self.robotExApi:goTo(self.returnPosition, self.robotExApi.movePatternZXY, false, true, 100)
+    self.robotExApi:goTo(self.returnPosition, self.robotExApi.movePatternZXY, true, true, 100)
 end
 
 function SimpleBuilderBehavior:fullService(robotExApi, blockList)

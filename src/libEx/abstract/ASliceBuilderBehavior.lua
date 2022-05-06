@@ -1,9 +1,9 @@
 local Class = require('libEx/Class')
 
----@class ASliceBuilderBehavior : Class
+---@class ASliceBuilderBehavior : Class, IRunable
 ---@field public super Class
 ---@field public slice Slice
-local ASliceBuilderBehavior = Class:extended({class = 'AbstractClass ASliceBuilderBehavior'})
+local ASliceBuilderBehavior = Class:extended({class = 'AbstractClass ASliceBuilderBehavior'}):implements(require("libEx/interface/IRunable"))
 
 ---@return ASliceBuilderBehavior
 ---@param slice Slice

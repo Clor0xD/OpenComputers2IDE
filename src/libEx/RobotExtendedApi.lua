@@ -107,6 +107,7 @@ function RobotExtendedApi:around()
     self:right()
 end
 
+---@param globalRotation PositionSide
 function RobotExtendedApi:rotateTo(globalRotation)
     self.turnToTurnFunction[self.position:calculateTurn(globalRotation)](self)
 end
@@ -258,7 +259,7 @@ function RobotExtendedApi:goToX(dx, _, _, ...)
     self:multiStep(math.abs(dx), self.forward, ...)
 end
 
-function RobotExtendedApi:goToY(_, dy, _, ...)
+function RobotExtendedApi:goToY(_, dy, _, ...)   
     if dy > 0 then
         self:multiStep(math.abs(dy), self.up, ...)
     else
@@ -287,7 +288,7 @@ function RobotExtendedApi:isCharged()
     return self.energy() >= self.maxCharge       
 end
 
-RobotExtendedApi.movePatternZXY = {RobotExtendedApi.nop, RobotExtendedApi.goToZ, RobotExtendedApi.goToX, RobotExtendedApi.goToY}
+RobotExtendedApi.movePatternZXY = {RobotExtendedApi.goToZ, RobotExtendedApi.goToX, RobotExtendedApi.goToY}
 RobotExtendedApi.turnToTurnFunction = { [0] = RobotExtendedApi.nop, [1] = RobotExtendedApi.right, [2] = RobotExtendedApi.around, [3] = RobotExtendedApi.left }
 RobotExtendedApi.minCharge = 3000
 RobotExtendedApi.maxCharge = RobotExtendedApi.maxEnergy() - 300

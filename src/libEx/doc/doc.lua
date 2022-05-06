@@ -31,13 +31,19 @@ local GTToolStack
 ---@class Slice
 ---@field public stackList NativeStack[] @NativeStack.label [0] - void
 ---@field public blockMap table @2D array of indexes to stackList
+---@field public isVertical boolean
+---@field public centerRow number
+---@field public centerColumn number
 local Slice = {
     stackList = {        
-        [blockIndex] = "label"
+        [blockIndex] = nil
     },
     blockMap = {
         [row] = {
             [column] = blockIndex
         }
-    }
+    },
+    centerRow = nil,
+    centerColumn = nil,
+    isVertical = nil
 }

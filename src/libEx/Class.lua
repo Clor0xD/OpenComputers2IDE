@@ -1,12 +1,13 @@
 --
 -- Created by Clor#D on 17.05.2020.
--- В©SofaSolt, 2020
+-- ©SofaSolt, 2020
 --
 
 ---@class Class
 ---@field public class string
 ---@field public super Class
 ---@field public isInstance boolean
+---@field public clazz Class @ is not instanse class
 local Class
 
 if Class then
@@ -17,19 +18,17 @@ Class = {}
 Class.class = "Class Class"
 Class.isInstance = false
 Class.super = Class
+Class.clazz = Class
 
 function Class:tostring()
     return tostring(self) .. " " .. self.class
 end
 
---function Class:call(...)
---    print(self:tostring().." call() no implemented")
---end
-
 function Class:extended (child) -- child = {}
-    -- РЅР°СЃР»РµРґРѕРІР°РЅРёРµ СЃС‚Р°С‚РёС‡РµСЃС‚РѕР№ С‡Р°СЃС‚Рё С‚Р°Р±Р»РёС†Р° Class, child.super РґРѕСЃС‚СѓРї Рє СЃС‚Р°С‚РёС‡РµСЃРєРѕР№ С‚Р°Р±Р»РёС†Рµ СЂРѕРґРёС‚РµР»СЏ
-    child.super = self
+    -- наследование статичестой части таблица Class, child.super доступ к статической таблице родителя
+    child.super = self    
     setmetatable(child, { __index = self, isInstance = false})
+    child.clazz = child
     return child
 end
 
@@ -51,10 +50,9 @@ function Class:implements(...)
 end
 
 function Class:extendedInstance(instance)
-    -- РЅР°СЃР»РµРґРѕРІР°РЅРёРµ СЌРєР·РµРјРїР»СЏСЂР° С‚Р°Р±Р»РёС†Р° instance
-    setmetatable(instance, self)
-    self.__index = self
-    --self.__call = self.call
+    -- наследование экземпляра таблица instance
+    setmetatable(instance, self.clazz)
+    self.clazz.__index = self.clazz    
     return instance
 end
 
@@ -168,16 +166,16 @@ if Implementation then
     return Implementation
 end
 
-Implementation = Class:extended({})-- "РЅР°СЃР»РµРґРѕРІР°РЅРёСЏ" РєР»Р°СЃСЃР°, РїРѕ СЃСѓС‚Рё СЃРѕРµРґРµРЅРµРЅРёРµ СЃС‚Р°С‚РёС‡РµСЃРєРёС… С‚Р°Р±Р»РёС† РІ РёРµСЂР°СЂС…РёСЋ РЅР°СЃР»РµРґРѕРІР°РЅРёСЏ
+Implementation = Class:extended({})-- "наследования" класса, по сути соеденение статических таблиц в иерархию наследования
 Implementation.class = "Implementation"
 function Implementation:toString()
     return self.class
 end
 
 function Implementation:new(stringParent, stringChildren)
-    local instance = self.super:new(stringParent) -- РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РїСЂРµРґРєР°
+    local instance = self.super:new(stringParent) -- конструктор предка
     self.stringC = stringChildren
-    return self:extendedInstance(instance) -- "РЅР°СЃР»РµРґРѕРІР°РЅРёСЏ" СЌРєР·РµРјРїР»СЏСЂР°, РїРѕ СЃСѓС‚Рё СЃРѕРµРґРµРЅРµРЅРёРµ С‚Р°Р±Р»РёС† СЌРєР·РµРјР»СЏСЂР° РІ РёРµСЂР°СЂС…РёСЋ РЅР°СЃР»РµРґРѕРІР°РЅРёСЏ
+    return self:extendedInstance(instance) -- "наследования" экземпляра, по сути соеденение таблиц экземляра в иерархию наследования
 end
 
 return Implementation

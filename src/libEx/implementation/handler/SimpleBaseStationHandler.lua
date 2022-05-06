@@ -36,15 +36,13 @@ function SimpleBaseStationHandler:fullService(robotExApi, blockList)
 
     robotExApi.inventoryManager:pullToContainer(robotExApi.baseStation.chargeStation.facing,1)
     InventoryController.equip()
-
-    for stack,totalCount in pairs(blockList) do
-        print(stack)        
+    for stack,totalCount in pairs(blockList) do      
         robotExApi.inventoryManager:selectStack(stack)
         local deltaCount = totalCount - (inventoryList[stack.label] and inventoryList[stack.label] or 0)             
-        robotExApi.inventoryManager:pullFromContainerStack(deltaCount % stack.maxSize, robotExApi.baseStation.containerList[1])      
+        robotExApi.inventoryManager:pullFromContainerStack(stack, deltaCount % stack.maxSize, robotExApi.baseStation.containerList[1])      
         for i = 1, deltaCount // stack.maxSize do
             os.sleep(0.1)
-            if not robotExApi.inventoryManager:pullFromContainerStack(stack.maxSize, robotExApi.baseStation.containerList[1]) then
+            if not robotExApi.inventoryManager:pullFromContainerStack(stack, stack.maxSize, robotExApi.baseStation.containerList[1]) then
                 break
             end
         end
