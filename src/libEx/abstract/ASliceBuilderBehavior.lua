@@ -7,8 +7,8 @@ local ASliceBuilderBehavior = Class:extended({class = 'AbstractClass ASliceBuild
 
 ---@return ASliceBuilderBehavior
 ---@param slice Slice
-function ASliceBuilderBehavior:new(slice)
-    local instance = self.super:new()
+function ASliceBuilderBehavior:new(slice)    
+    local instance = self.super:new()    
     return self:extendedInstance(instance):setSlice(slice)
 end
 

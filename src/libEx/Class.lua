@@ -57,8 +57,9 @@ function Class:extendedInstance(instance)
 end
 
 function Class:new()
-    local instance = {isInstance = true}
-    return self:extendedInstance(instance)
+    return  {isInstance = true}
+    --local instance = {isInstance = true}
+    --return self:extendedInstance(instance)
 end
 
 function Class:noImplError(funcName)
@@ -84,7 +85,7 @@ end
 
 function Class:assertNumberSetDefault(number, default, message)-- number = '100'
     if not message then
-        message = 'assert unknown param'
+        message = ' assert unknown param'
     end
     if number == nil then
         if tonumber(default) then

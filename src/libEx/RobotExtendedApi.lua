@@ -25,7 +25,9 @@ NativeComputer.class = "Class NativeComputer"
 ---@field generalBehavior : AGeneralBehavior
 ---@field minCharge : number
 ---@field maxCharge : number
----@field turnToTurnFunction : function[] 
+---@field turnToTurnFunction : function[]
+---@field movePatternZXY : function[]
+---@field movePatternYZX : function[]
 local RobotExtendedApi = Class:extended(NativeComputer):extended(NativeRobotApi):extended({
     class = "Class RobotExtendedApi"
 })
@@ -289,6 +291,7 @@ function RobotExtendedApi:isCharged()
 end
 
 RobotExtendedApi.movePatternZXY = {RobotExtendedApi.goToZ, RobotExtendedApi.goToX, RobotExtendedApi.goToY}
+RobotExtendedApi.movePatternYZX = {RobotExtendedApi.goToY,RobotExtendedApi.goToZ, RobotExtendedApi.goToX }
 RobotExtendedApi.turnToTurnFunction = { [0] = RobotExtendedApi.nop, [1] = RobotExtendedApi.right, [2] = RobotExtendedApi.around, [3] = RobotExtendedApi.left }
 RobotExtendedApi.minCharge = 3000
 RobotExtendedApi.maxCharge = RobotExtendedApi.maxEnergy() - 300

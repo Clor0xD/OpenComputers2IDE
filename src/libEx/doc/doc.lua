@@ -13,6 +13,11 @@ local ContainerItemFilter
 ---@field public hasTag boolean
 local NativeStack
 
+---@class StackStorageData
+---@field public stock number
+---@field public firstSlot number
+---@field public lastSlot number
+
 ---@class GTToolStack
 ---@field public transferLimit number
 ---@field public damage number
@@ -28,21 +33,24 @@ local NativeStack
 ---@field public label string
 local GTToolStack
 
+---@alias ExtendedNativeStack NativeStack | StackStorageData
+
 ---@class Slice
----@field public stackList NativeStack[] @NativeStack.label [0] - void
+---@field public stackList ExtendedNativeStack[] @NativeStack.label [0] - void
 ---@field public blockMap table @2D array of indexes to stackList
 ---@field public isVertical boolean
 ---@field public centerRow number
 ---@field public centerColumn number
-local Slice = {
-    stackList = {        
+local Slice = {      
+    stackList = {            
         [blockIndex] = nil
     },
     blockMap = {
         [row] = {
             [column] = blockIndex
         }
-    },
+    },    
+    isNotUniqueStack = nil,   
     centerRow = nil,
     centerColumn = nil,
     isVertical = nil

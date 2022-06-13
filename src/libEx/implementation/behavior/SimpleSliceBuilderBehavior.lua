@@ -10,59 +10,55 @@ local SimpleSliceBuilderBehavior = ASliceBuilderBehavior:extended({
 ---@param slice Slice @strictly rectangular blockMap 
 ---@return SimpleSliceBuilderBehavior
 function SimpleSliceBuilderBehavior:new(slice)
-    local instance = self.super:new(slice)
+    local instance = self.super:new(slice)    
     return self:extendedInstance(instance)
 end
 
---[[
-    {0,1,1,0},
-    {1,0,0,1},
-    {1,0,0,1},
-    {0,1,1,0}
-]]
 ---@param robotExApi RobotExtendedApi
----@param position Position
-function SimpleSliceBuilderBehavior:run(robotExApi, position)
-    local slice = self.slice
+---@param position Position @const
+function SimpleSliceBuilderBehavior:run(robotExApi, position)       
     if not self.tempPos then
         self.tempPos = position:clone()
-    else
-        self.tempPos:copy(position)
     end   
-    local column, lim, dir = 0, 0, 0
-    local currentRow, currentColumn = slice.centerRow, slice.centerColumn
-
-    if slice.isVertical then       
-        for row = 2, #slice.blockMap - 1 do
-            column, lim, dir = self:calcRowStartPoint(row, column)
-            robotExApi:goTo(self.tempPos:shift(position.turn.left, currentColumn - column, currentRow - row, true),
-                robotExApi.movePatternZXY, true, true, 100)
-            column = self:buildRow(robotExApi, row, column, lim, dir)
-            currentRow, currentColumn = row, column
+    local column, lim, dir
+    local currentRow, currentColumn = self.slice.centerRow, self.slice.centerColumn
+    if self.slice.isVertical then       
+        for row = 2, #self.slice.blockMap - 1 do
+            column, lim, dir = self:calcRowStartPoint(row, currentColumn)
             self.tempPos:copy(robotExApi.position)
-            self.tempPos.r = position.r          
-        end
+            self.tempPos.r = position.r 
+            robotExApi:goTo(self.tempPos:shift(position.turn.left, currentColumn - column, currentRow - row),
+                robotExApi.movePatternYZX, false, true, 100)
+            if dir == 1 then
+                robotExApi:rotateTo(position.r + position.turn.left)
+            else
+                robotExApi:rotateTo(position.r + position.turn.right)
+            end
+            column = self:buildRow(robotExApi, row, column, lim, dir)
+            currentRow, currentColumn = row, column                                       
+        end        
     else
         self:error(" horizontal mode is not supported")
     end
+    robotExApi:goTo(position, robotExApi.movePatternZXY, true, true, 100)
 end
 
 function SimpleSliceBuilderBehavior:buildRow(robotExApi, row, _column, limit, dir)
-    local stackIndex
-    robotExApi:place(slice.stackList[slice.blockMap[row][_column]])
-    for column = _column, limit, dir do
-        robotExApi:around()
-        stackIndex = slice.blockMap[row - 1][column]
+    local stackIndex    
+    robotExApi:place(self.slice.stackList[self.slice.blockMap[row][_column - dir]])
+    robotExApi:around()
+    for column = _column, limit, dir do       
+        stackIndex = self.slice.blockMap[row - 1][column]
         if stackIndex > 0 then
-            robotExApi:placeUp(slice.stackList[stackIndex])
+            robotExApi:placeUp(self.slice.stackList[stackIndex])
         end
-        stackIndex = slice.blockMap[row + 1][column]
+        stackIndex = self.slice.blockMap[row + 1][column]
         if stackIndex > 0 then
-            robotExApi:placeDown(slice.stackList[stackIndex])
+            robotExApi:placeDown(self.slice.stackList[stackIndex])
         end
-        stackIndex = slice.blockMap[row][column + 1]
+        stackIndex = self.slice.blockMap[row][column + dir]
         if stackIndex > 0 then
-            robotExApi:place(slice.stackList[stackIndex])
+            robotExApi:place(self.slice.stackList[stackIndex])
             return column
         end
         robotExApi:forward(true, 100)
@@ -71,7 +67,7 @@ end
 
 function SimpleSliceBuilderBehavior:calcRowStartPoint(row, _column)
     local lastBlock, limit, dir = 0, 0, 0
-    if _column < #self.slice.blockMap[row] / 2 then
+    if _column <= #self.slice.blockMap[row] / 2 then
         _column, limit, dir = 1, #self.slice.blockMap[row], 1
     else
         limit, _column, dir = 1, #self.slice.blockMap[row], -1
@@ -82,6 +78,7 @@ function SimpleSliceBuilderBehavior:calcRowStartPoint(row, _column)
         end
         lastBlock = self.slice.blockMap[row][column]
     end
+    self:error("no calc row start point")
 end
 
 --[[

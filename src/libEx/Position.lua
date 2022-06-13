@@ -221,13 +221,13 @@ function Position:shift(turn, distanceH, distanceV, isTurn)
     turn = (turn + self.r) % 4
     self.y = self.y + distanceV
     if turn == self.side.negZ then
-        z = z - distanceH
+        self.z = self.z - distanceH
     elseif turn == self.side.posZ then
-        z = z + distanceH
+        self.z = self.z + distanceH
     elseif turn == self.side.negX then
-        x = x - distanceH
+        self.x = self.x - distanceH
     elseif turn == self.side.posX then
-        x = x + distanceH
+        self.x = self.x + distanceH
     end
     if isTurn then
         self.r = turn
@@ -272,7 +272,7 @@ end
 function Position:calculateTurn(globalRotation)
     return ((globalRotation - self.r) + 4) % 4
 end
-
+ 
 ---@private
 function Position:assertFormat(format, message)
     if not format or type(format) ~= 'string' then
